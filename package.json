@@ -1,6 +1,6 @@
 {
   "name": "google-closure-library-webpack-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Webpack plugin for generating Google Closure deps, work with closure-webpack-plugin",
   "main": "src/index.js",
   "keywords": [],
