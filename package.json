@@ -1,0 +1,23 @@
+{
+  "name": "google-closure-library-webpack-plugin",
+  "version": "1.0.0",
+  "description": "Webpack plugin for generating Google Closure deps, work with closure-webpack-plugin",
+  "main": "src/index.js",
+  "keywords": [],
+  "author": "GuowenGao(funte@outlook.com)",
+  "homepage": "https://github.com/funte/google-closure-library-webpack-plugin",
+  "repository": "https://github.com/funte/google-closure-library-webpack-plugin",
+  "bugs": {
+    "urls": "https://github.com/funte/google-closure-library-webpack-plugin/issues"
+  },
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "acorn": "^5.0.0",
+    "acorn-dynamic-import": "^2.0.0",
+    "fs": "0.0.1-security",
+    "path": "^0.12.7",
+    "schema-utils": "^2.6.5",
+    "webpack": "4.x"
+  }
+}
