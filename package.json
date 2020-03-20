@@ -11,8 +11,7 @@
     "urls": "https://github.com/funte/google-closure-library-webpack-plugin/issues"
   },
   "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {
+  "dependencies": {
     "acorn": "^5.0.0",
     "acorn-dynamic-import": "^2.0.0",
     "fs": "0.0.1-security",
