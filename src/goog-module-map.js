@@ -173,12 +173,6 @@ class GoogModuleMap {
             case 'module':
             case 'declareModuleId':
               if (moduleData.isGoogModule === false) {
-                console.log('------------------')
-                console.log(moduleData.path)
-                console.log(node.type)
-                console.log(node.ancestor.type)
-                console.log(node)
-                console.log(node.ancestor)
                 throw new Error(`Do not use "goog.module" or "goog.declareModuleId" 
                 with traditional "goog.require" and "goog.provide"!!`);
               }
