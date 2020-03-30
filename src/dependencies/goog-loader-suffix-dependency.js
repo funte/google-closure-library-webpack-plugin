@@ -17,7 +17,7 @@ class GoogLoaderSuffixDependency extends ModuleDependency {
   }
 }
 
-class GoogLoaderSuffixDependencyTemplate {
+GoogLoaderSuffixDependency.Template = class GoogLoaderSuffixDependencyTemplate {
   apply(dep, source) {
     if (dep.insertPosition === null) {
       return;
@@ -25,7 +25,7 @@ class GoogLoaderSuffixDependencyTemplate {
 
     let content = '';
     if (dep.isGoogModule) {
-      content = '\nreturn exports; });';
+      content = '\nreturn module.exports; });';
     }
     content += `
 goog.moduleLoaderState_ = googPreviousLoaderState__;`;
@@ -34,4 +34,3 @@ goog.moduleLoaderState_ = googPreviousLoaderState__;`;
 }
 
 module.exports = GoogLoaderSuffixDependency;
-module.exports.Template = GoogLoaderSuffixDependencyTemplate;

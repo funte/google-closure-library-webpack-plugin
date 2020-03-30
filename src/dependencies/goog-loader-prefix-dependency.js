@@ -1,10 +1,10 @@
 const ModuleDependency = require('webpack/lib/dependencies/ModuleDependency');
 
 class GoogLoaderPrefixDependency extends ModuleDependency {
-  constructor(request, isModule, insertPosition) {
+  constructor(request, isGoogModule, insertPosition) {
     super(request);
     this.insertPosition = insertPosition;
-    this.isGoogModule = isModule;
+    this.isGoogModule = isGoogModule;
   }
 
   get type() {
@@ -17,15 +17,18 @@ class GoogLoaderPrefixDependency extends ModuleDependency {
   }
 }
 
-class GoogLoaderPrefixDependencyTemplate {
+GoogLoaderPrefixDependency.Template = class GoogLoaderPrefixDependencyTemplate {
   apply(dep, source) {
     if (dep.insertPosition === null) {
       return;
     }
-
     let content = `var googPreviousLoaderState__ = goog.moduleLoaderState_;\n`;
     if (dep.isGoogModule) {
-      content += `goog.moduleLoaderState_ = {moduleName: '', declareLegacyNamespace: false};
+      content += `goog.moduleLoaderState_ = {
+  moduleName: '',
+  declareLegacyNamespace: false,
+  type: goog.ModuleType.GOOG
+};
 goog.loadModule(function() {\n`;
     } else {
       content += `goog.moduleLoaderState_ = null;\n`;
@@ -35,4 +38,3 @@ goog.loadModule(function() {\n`;
 }
 
 module.exports = GoogLoaderPrefixDependency;
-module.exports.Template = GoogLoaderPrefixDependencyTemplate;

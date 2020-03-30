@@ -1,60 +1,117 @@
 # google-closure-library-webpack-plugin
-Make webpack recognize `goog.require, goog.provide, goog.module`, seprate from [closure-webpack-plugin](https://github.com/webpack-contrib/closure-webpack-plugin).
-Work with [google-closure-deps-webpack-plugin](https://www.npmjs.com/package/google-closure-deps-webpack-plugin).
+Make webpack recognize `goog.require, goog.provide, goog.module, goog.declareModuleId`.
+This plugin just transform the closure file to compatible webpack bundle, no need to install Google-Closure-Compiler. 
 
-<b>Note</b>: this plugin donnot compile your code, there is no java or JS version Google-Closure-Compier working in it. 
-
-## usage
-Case these files in your project are written with Google Closure:  
-```js
-// <your project>/src/hello.js
-goog.require('goog.dom');
-goog.require('goog.dom.TagName');
-
-var ele = goog.dom.createDom(goog.dom.TagName.P, {}, "hello world!!");
-
-export { ele };
+## Install
+```sh
+npm install google-closure-library-webpack-plugin --save-dev
 ```
+## Example
+
+The compelte example visit https://github.com/funte/template-closure-webpack-plugin-2.
+
+### 1. goog.require example
+`webpack.config.js`:
 ```js
-// <your project>/src/index.js
-import {ele} from './lib/hello.js';
-
-document.body.append(ele);
-
+new GCLibraryPlugin({
+  sources: ['src/goog-module-example']
+}),
 ```
 
-Config webpack with:
+entry file `src/goog-module-example/index.js`:
 ```js
-const GCLibraryPlugin = require('google-closure-library-webpack-plugin');
-const GCDepsPlugin = require('google-closure-deps-webpack-plugin');
-
-module.exports = {
-  // ...
-  plugins: [
-      new GCDepsPlugin({
-        output: '.tmp/deps.js',
-        source: {
-          roots: ['src'],
-        },
-        goog: 'node_modules/google-closure-library/closure/goog/base.js',
-        python: 'python'
-      }),
-      new GCLibraryPlugin({
-        closureLibraryBase: require.resolve(
-          'google-closure-library/closure/goog/base'
-        ),
-        deps: [
-          require.resolve('google-closure-library/closure/goog/deps'),
-          // path for generated depenencies file.
-          '.tmp/deps.js',
-        ],
-      })
-    ]
-}
+// use traditional goog.require(without return) import the Foo, this will
+// create a global variable.
+// never use goog.provide defines too many top level namespace.
+goog.require('Foo');
+console.log(Foo);
+module.exports = { Foo };
 ```
 
-## example
-- [template-closure-webpack-plugin-2](https://github.com/funte/template-closure-webpack-plugin-2)  
-  Use plugins `google-closure-deps-webpack-plugin` and `google-closure-library-webpack-plugin` support [Closure Library](https://developers.google.com/closure/library) in webpack.  
+module `src/goog-module-example/foo.js`:
+```js
+// defines a top level namespace 'Foo'.
+goog.provide('Foo');
+Foo.PI = 3.14;
+```
 
-More visit https://developers.google.com/closure/library.  
+### 2. goog.module example
+`webpack.config.js`:
+```js
+new GCLibraryPlugin({
+  sources: ['src/goog-module-example']
+}),
+```
+
+entry file `src/goog-module-example/index.js`:
+```js
+// /* directly reference the Closure file with nodejs require. */
+// var Foo = require('./foo');
+// console.log(Foo);
+// module.exports = { Foo };
+
+/* directly reference the Closure file from ES6 mobule. */
+import Foo from './foo';
+console.log(Foo);
+export { Foo };
+```
+
+module file `src/goog-module-example/foo.js`:
+```js
+// defines a goog module with ID 'App'.
+goog.module('Foo');
+const PI = 3.14;
+exports = { PI };
+```
+
+### 3. goog.declare example
+`webpack.config.js`:
+```js
+new GCLibraryPlugin({
+  sources: ['src/goog-declare-example']
+}),
+```
+
+entry file `src/goog-declare-example/index`:
+```js
+/* reference ES6 module from Closure file. */
+
+// define a goog module with ID 'App'. 
+goog.module('App');
+// goog.require with a return value just work in goog module.
+var Foo = goog.require('Foo');
+console.log(Foo);
+exports = { Foo };
+
+```
+
+module `src/goog-declare-example/foo.js`:
+```js
+/* reference Closure file from ES6 module. */
+
+// associates an ES6 module with a goog module ID 'Foo' so that is available
+// via goog.require.
+goog.declareModuleId('Foo');
+// goog.require with a return value just work in goog module.
+var Bar = goog.require('Bar');
+// export Bar as default in ES6 module.
+export default Bar;
+```
+
+module `src/goog-declare-example/bar.js`:
+```js
+// defines a goog module with ID 'Bar'.
+goog.module('Bar');
+var PI = 3.14;
+// export by key.
+exports = { PI };
+```
+
+## Options
++ goog
+  Path to Closure Library base.js file.
++ sources  
+  Directories and JS files path to scan dependencies.
+  Case your project has namespaces 'A', 'B', 'C' and 'A' requires 'B' but leave namespace 'C' alone. When module 'A' as the entry, after building work, webpack bundle will just cover 'A' and 'B', the namespace 'C' dropped.  
++ excludes  
+  Exclude directories and JS files path.

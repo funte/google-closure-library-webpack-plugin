@@ -1,10 +1,16 @@
 const ModuleDependency = require('webpack/lib/dependencies/ModuleDependency');
 
 class GoogDependency extends ModuleDependency {
-  constructor(request, insertPosition, isBase = false) {
+  /** 
+   * @param {boolean} stripOpt.remove if true, remove the goog.require expression.
+   * @param {Number} stripOpt.start the start postion. 
+   * @param {Number} stripOpt.end the end position.
+   */
+  constructor(request, insertPosition, isBase, stripOpt) {
     super(request);
     this.insertPosition = insertPosition;
     this.isBase = isBase;
+    this.stripOpt = stripOpt;
   }
 
   get type() {
@@ -17,7 +23,7 @@ class GoogDependency extends ModuleDependency {
   }
 }
 
-class GoogDependencyTemplate {
+GoogDependency.Template = class GoogDependencyTemplate {
   apply(dep, source) {
     if (dep.insertPosition === null) {
       return;
@@ -28,8 +34,11 @@ class GoogDependencyTemplate {
       content = `var goog = ${content}`;
     }
     source.insert(dep.insertPosition, content);
+
+    if (dep.stripOpt && dep.stripOpt.remove) {
+      source.replace(dep.stripOpt.start, dep.stripOpt.end, '');
+    }
   }
 }
 
 module.exports = GoogDependency;
-module.exports.Template = GoogDependencyTemplate;

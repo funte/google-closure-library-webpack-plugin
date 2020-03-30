@@ -1,14 +1,10 @@
-/**
- * @fileoverview Add support for closure-library dependency types to webpack.
- *
- * Includes:
- *
- *   - goog.require
- *   - goog.module
- *   - goog.provide
- */
-
-const RequestShortener = require('webpack/lib/RequestShortener');
+const path = require('path');
+const fs = require('fs');
+const validateOptions = require('schema-utils');
+const schema = require('./schema');
+const defaultsDeep = require('lodash.defaultsdeep');
+const GoogModuleMap = require('./goog-module-map');
+const NullFactory = require('webpack/lib/NullFactory');
 const GoogRequireParserPlugin = require('./goog-require-parser-plugin');
 const GoogDependency = require('./dependencies/goog-dependency');
 const GoogBaseGlobalDependency = require('./dependencies/goog-base-global');
@@ -16,67 +12,38 @@ const GoogLoaderPrefixDependency = require('./dependencies/goog-loader-prefix-de
 const GoogLoaderSuffixDependency = require('./dependencies/goog-loader-suffix-dependency');
 const GoogLoaderEs6PrefixDependency = require('./dependencies/goog-loader-es6-prefix-dependency');
 const GoogLoaderEs6SuffixDependency = require('./dependencies/goog-loader-es6-suffix-dependency');
-const NullFactory = require('webpack/lib/NullFactory');
-const validateOptions = require('schema-utils');
+const GoogleExportsDependency = require('./dependencies/goog-exports-dependency');
 
 const PLUGIN = { name: 'GoogleClosureLibraryWebpackPlugin' };
 
-
-// schema for options object
-const schema = {
-  type: 'object',
-  properties: {
-    closureLibraryBase: {
-      description: "Path to Closure-Library's base.js file",
-      type: "string"
-    },
-    deps: {
-      description: "Path to a Closure-Library deps file",
-      type: "array",
-      items: {
-        type: "string"
-      }
-    },
-    extraDeps: {
-      description: "A map of name to path of additional closure-library style dependencies",
-      type: "object"
-    }
-  }
-};
-
 class GoogleClosureLibraryWebpackPlugin {
   constructor(options) {
-    validateOptions(
-      schema,
-      options || {},
-      'closure-library-plugin'
-    );
-    this.options = Object.assign({}, options || {});
+    validateOptions(schema, options, { name: 'google-closure-library-webpack-plugin' });
+    this.options = defaultsDeep({
+      goog: path.resolve('node_modules/google-closure-library/closure/goog/base.js'),
+      sources: [],
+      excludes: []
+    }, options);
+    this.options.goog = path.resolve(this.options.goog);
+    const basename = path.basename(this.options.goog);
+    if (!fs.existsSync(this.options.goog || basename !== 'base.js')) {
+      throw new Error(
+        `Unable locate Closure Library base.js file from ${this.options.goog}!!`
+      );
+    }
+    if (this.options.sources.length == 0 && this.options.extras.length == 0) {
+      throw new Error(`Sources and extras options could not both empty!!`);
+    }
+
+    this.moduleMap = new GoogModuleMap(this.options);
   }
 
   apply(compiler) {
-    this.requestShortener = new RequestShortener(compiler.context);
+    compiler.hooks.compilation.tap(PLUGIN, (compilation, params) => {
+      var { normalModuleFactory } = params;
 
-    compiler.hooks.compilation.tap(PLUGIN, (compilation, params) =>
-      this.complation_(compilation, params)
-    );
-  }
-
-  complation_(compilation, params) {
-    if (
-      this.options.closureLibraryBase &&
-      (this.options.deps || this.options.extraDeps)
-    ) {
-      const parserPluginOptions = Object.assign(
-        { mode: compilation.options.mode },
-        this.options
-      );
-
-      const { normalModuleFactory } = params;
-
-      const parserCallback = (parser) => {
-        const parserPlugin = new GoogRequireParserPlugin(parserPluginOptions);
-        parserPlugin.apply(parser);
+      const parserCallback = (parser, options) => {
+        new GoogRequireParserPlugin(PLUGIN, this.moduleMap).apply(parser);
       };
 
       normalModuleFactory.hooks.parser
@@ -97,6 +64,7 @@ class GoogleClosureLibraryWebpackPlugin {
         GoogDependency,
         new GoogDependency.Template()
       );
+
       compilation.dependencyFactories.set(
         GoogBaseGlobalDependency,
         params.normalModuleFactory
@@ -105,6 +73,7 @@ class GoogleClosureLibraryWebpackPlugin {
         GoogBaseGlobalDependency,
         new GoogBaseGlobalDependency.Template()
       );
+
       compilation.dependencyFactories.set(
         GoogLoaderPrefixDependency,
         params.normalModuleFactory
@@ -113,6 +82,7 @@ class GoogleClosureLibraryWebpackPlugin {
         GoogLoaderPrefixDependency,
         new GoogLoaderPrefixDependency.Template()
       );
+
       compilation.dependencyFactories.set(
         GoogLoaderSuffixDependency,
         params.normalModuleFactory
@@ -121,6 +91,7 @@ class GoogleClosureLibraryWebpackPlugin {
         GoogLoaderSuffixDependency,
         new GoogLoaderSuffixDependency.Template()
       );
+
       compilation.dependencyFactories.set(
         GoogLoaderEs6PrefixDependency,
         new NullFactory()
@@ -129,6 +100,7 @@ class GoogleClosureLibraryWebpackPlugin {
         GoogLoaderEs6PrefixDependency,
         new GoogLoaderEs6PrefixDependency.Template()
       );
+
       compilation.dependencyFactories.set(
         GoogLoaderEs6SuffixDependency,
         new NullFactory()
@@ -137,7 +109,16 @@ class GoogleClosureLibraryWebpackPlugin {
         GoogLoaderEs6SuffixDependency,
         new GoogLoaderEs6SuffixDependency.Template()
       );
-    }
+
+      compilation.dependencyFactories.set(
+        GoogleExportsDependency,
+        new NullFactory()
+      );
+      compilation.dependencyTemplates.set(
+        GoogleExportsDependency,
+        new GoogleExportsDependency.Template()
+      );
+    });
   }
 }
 

@@ -18,7 +18,7 @@ class GoogLoaderEs6SuffixDependency extends Dependency {
   }
 }
 
-class GoogLoaderes6SuffixDependencyTemplate {
+GoogLoaderEs6SuffixDependency.Template = class GoogLoaderes6SuffixDependencyTemplate {
   apply(dep, source) {
     if (dep.insertPosition === null) {
       return;
@@ -33,4 +33,3 @@ $jscomp.require = function() { return null; };`
 }
 
 module.exports = GoogLoaderEs6SuffixDependency;
-module.exports.Template = GoogLoaderes6SuffixDependencyTemplate;

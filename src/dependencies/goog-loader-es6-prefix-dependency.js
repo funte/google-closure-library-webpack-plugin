@@ -30,7 +30,7 @@ class GoogLoaderEs6PrefixDependency extends Dependency {
   }
 }
 
-class GoogLoaderEs6PrefixDependencyTemplate {
+GoogLoaderEs6PrefixDependency.Template = class GoogLoaderEs6PrefixDependencyTemplate {
   apply(dep, source) {
     if (dep.insertPosition === null) {
       return;
@@ -39,10 +39,9 @@ class GoogLoaderEs6PrefixDependencyTemplate {
     source.insert(
       dep.insertPosition,
       `$jscomp.getCurrentModulePath = function() { return '<webpack module>'; };\n` +
-        '$jscomp.require = function() { return __webpack_exports__ };\n'
+      '$jscomp.require = function() { return module.exports };\n'
     );
   }
 }
 
 module.exports = GoogLoaderEs6PrefixDependency;
-module.exports.Template = GoogLoaderEs6PrefixDependencyTemplate;

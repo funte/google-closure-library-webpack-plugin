@@ -1,29 +1,32 @@
+// 1. expose goog object in base.js as property of the global window object;
+// 2. return goog object support webpack require;
+// 3. disable debug loader;
+
 const Dependency = require('webpack/lib/Dependency');
 
-class GoogBaseGlobalDependency extends Dependency {}
+class GoogBaseGlobalDependency extends Dependency { }
 
-class GoogBaseGlobalDependencyTemplate {
+GoogBaseGlobalDependency.Template = class GoogBaseGlobalDependencyTemplate {
   apply(dep, source) {
     const sourceContent = source.source();
-    const content = `goog.ENABLE_DEBUG_LOADER = false;
+
+    const content = `
+goog.ENABLE_DEBUG_LOADER = false;
 module.exports = goog;`;
     source.insert(sourceContent.length, content);
 
-    const globalDefIndex = sourceContent.search(/\n\s*goog\.global\s*=\s*/);
-    let statementEndIndex = -1;
-    if (globalDefIndex >= 0) {
-      statementEndIndex = sourceContent.indexOf(';', globalDefIndex);
-    }
-    if (statementEndIndex) {
-      source.insert(
-        statementEndIndex + 1,
-        'goog.global = window; goog.global.CLOSURE_NO_DEPS = true;'
-      );
+    const start = sourceContent.search(/\s*goog\.global\s*=\s*/);
+    const end = sourceContent.indexOf(';', start);
+    if (start && end) {
+      const defination = `
+goog.global = window;
+goog.global.CLOSURE_NO_DEPS = true;
+window.goog = goog;`;
+      source.replace(start, end, defination);
     } else {
-      source.insert(0, 'this.CLOSURE_NO_DEPS = true;\n');
+      throw new Error('Variable goog not defined!!');
     }
   }
 }
 
 module.exports = GoogBaseGlobalDependency;
-module.exports.Template = GoogBaseGlobalDependencyTemplate;
