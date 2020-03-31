@@ -70,7 +70,7 @@ class GoogModuleMap {
             });
 
             // this.require_(moduleData);
-            this.path2Module.set(module, moduleData);
+            this.path2Module.set(modulePath, moduleData);
           }
         }
       }
