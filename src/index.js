@@ -31,8 +31,8 @@ class GoogleClosureLibraryWebpackPlugin {
         `Unable locate Closure Library base.js file from ${this.options.goog}!!`
       );
     }
-    if (this.options.sources.length == 0 && this.options.extras.length == 0) {
-      throw new Error(`Sources and extras options could not both empty!!`);
+    if (this.options.sources.length == 0) {
+      throw new Error(`Invalid sources option!!`);
     }
 
     this.moduleMap = new GoogModuleMap(this.options);
