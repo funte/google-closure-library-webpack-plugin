@@ -1,6 +1,6 @@
 {
   "name": "google-closure-library-webpack-plugin",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Webpack plugin for generating Google Closure deps, work with closure-webpack-plugin",
   "main": "src/index.js",
   "keywords": [],
@@ -21,5 +21,13 @@
     "schema-utils": "^2.6.5",
     "slim-pig": "^1.0.3",
     "webpack": "^4.42.1"
+  },
+  "devDependencies": {
+    "commitizen": "^4.2.1"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }

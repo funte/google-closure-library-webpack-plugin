@@ -1,6 +1,7 @@
 # google-closure-library-webpack-plugin
 Make webpack recognize `goog.require, goog.provide, goog.module, goog.declareModuleId`.
-This plugin just transform the closure file to compatible webpack bundle, no need to install Google-Closure-Compiler. 
+This plugin just transform the closure file to compatible webpack bundle, no need to install Google-Closure-Compiler.  
+Currently support `google-closure-library@20200315.0.0, webpack@4.42.0`.
 
 ## Install
 ```sh
@@ -108,8 +109,8 @@ exports = { PI };
 ```
 
 ## Options
-+ goog
-  Path to Closure Library base.js file.
++ goog  
+  Path to Closure Library base.js file.Default is `node_modules/google-closure-library/closure/goog/base.js`.
 + sources  
   Directories and JS files path to scan dependencies.
   Case your project has namespaces 'A', 'B', 'C' and 'A' requires 'B' but leave namespace 'C' alone. When module 'A' as the entry, after building work, webpack bundle will just cover 'A' and 'B', the namespace 'C' dropped.  
