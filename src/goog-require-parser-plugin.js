@@ -25,13 +25,10 @@ class GoogRequireParserPlugin {
           this.addLoaderDependency(parser, false);
         }
       } else {
-        const namespace = expr.arguments[0].value;
-        const moduleData = this.moduleMap.requireModuleByName(namespace);
-        if (moduleData === undefined) {
-          throw new Error(`Unable to locate module for namespace: ${namespace}!!`);
-        }
-        this.addGoogDependency(parser, moduleData.path, false,
-          !moduleData.isGoogModule ? {
+        const current = this.moduleMap.requireModuleByPath(parser.state.current.request);
+        const required = this.moduleMap.requireModuleByName(expr.arguments[0].value);
+        this.addGoogDependency(parser, required.path, false,
+          !current.isGoogModule ? {
             remove: true,
             start: expr.start,
             end: expr.end

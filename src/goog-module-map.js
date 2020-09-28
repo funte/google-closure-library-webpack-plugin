@@ -85,8 +85,8 @@ class GoogModuleMap {
   requireModuleByPath(modulePath) {
     var moduleData = this.path2Module.get(modulePath);
     if (moduleData === undefined) {
-      this.path2Module.set(modulePath, new GoogModuleData(modulePath));
-      moduleData = this.path2Module.get(modulePath);
+      moduleData = new GoogModuleData(modulePath);
+      this.path2Module.set(modulePath, moduleData);
     }
 
     if (!moduleData.cooked) {
@@ -103,7 +103,7 @@ class GoogModuleMap {
    */
   requireModuleByName(namespace) {
     const modulePath = this.namespace2Path.get(namespace);
-    if (modulePath === undefined) {
+    if (modulePath === null || modulePath === undefined) {
       throw new Error(`Unknow namespace ${namespace}!!`);
     }
 
@@ -142,29 +142,34 @@ class GoogModuleMap {
           node.callee.object.name === 'goog' &&
           node.callee.property.type === 'Identifier'
         ) {
+          if (node.ancestor === null || node.ancestor === undefined) {
+            throw new Error('Internal error, broken AST tree!!');
+          }
           switch (node.callee.property.name) {
             case 'require':
               // traditional goog.require only could be child of 'ExpressionStatement'
               // node, if the parent node is other types, that's a goog module. 
-              //  in 'VariableDeclarator': var Bar = goog.require('Bar');
-              //  in 'AssignmentExpression': Bar = goog.require('Bar'); 
-              //  in 'CallExpression': foo(goog.require('Bar'));
-              //  in 'ArrayExpression': var foo = [goog.require('Bar')];
-              if (
-                node.ancestor &&
-                node.ancestor.type === 'ExpressionStatement' &&
-                moduleData.isGoogModule === false
-              ) {
-                moduleData.isGoogModule = false;
+              // in code `var Bar = goog.require('Bar')`, the ancestor type is 'VariableDeclarator';
+              // in code `Bar = goog.require('Bar')`, the ancestor type is 'AssignmentExpression'; 
+              // in code `foo(goog.require('Bar'))`, the ancestor type is 'CallExpression';
+              // in code `var foo = [goog.require('Bar')]`, the ancestor type if 'ArrayExpression';
+              if (node.ancestor.type !== 'ExpressionStatement') {
+                if (moduleData.isGoogModule === false) {
+                  throw new Error('The "goog.require" return null outside the goog module!!');
+                } else if (moduleData.isGoogModule === null) {
+                  throw new Error(`The "goog.module" or "goog.declareModuleId" must go fist line!!`);
+                }
               } else {
-                moduleData.isGogModule = true;
+                if (moduleData.isGoogModule === null) {
+                  moduleData.isGoogModule = false;
+                }
               }
               moduleData.requires.add(node.arguments[0].value);
               break;
             case 'provide':
               // goog.privide not allowed in goog module.
               if (moduleData.isGoogModule === true) {
-                throw new Error(`Unexpected "goog.provide" in goog mogule!!`);
+                throw new Error(`Unexpected "goog.provide" in goog module!!`);
               }
               moduleData.isGoogModule = false;
               moduleData.provides.add(node.arguments[0].value);
@@ -173,8 +178,7 @@ class GoogModuleMap {
             case 'module':
             case 'declareModuleId':
               if (moduleData.isGoogModule === false) {
-                throw new Error(`Do not use "goog.module" or "goog.declareModuleId" 
-                with traditional "goog.require" and "goog.provide"!!`);
+                throw new Error(`The "goog.module" or "goog.declareModuleId" must go fist line!!`);
               }
               moduleData.isGoogModule = true;
               moduleData.provides.add(node.arguments[0].value);
