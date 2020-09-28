@@ -1,7 +1,7 @@
 # google-closure-library-webpack-plugin
 Make webpack recognize `goog.require, goog.provide, goog.module, goog.declareModuleId`.
 This plugin just transform the closure file to compatible webpack bundle, no need to install Google-Closure-Compiler.  
-Currently support `google-closure-library@20200315.0.0, webpack@4.42.0`.
+Currently support `google-closure-library@20200830.0.0, webpack@4.42.0`.
 
 ## Install
 ```sh
