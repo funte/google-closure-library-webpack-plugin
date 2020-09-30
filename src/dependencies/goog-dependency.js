@@ -32,11 +32,9 @@ GoogDependency.Template = class GoogDependencyTemplate {
     let content = `__webpack_require__(${JSON.stringify(dep.module.id)});\n`;
     if (dep.isBase) {
       content = `var goog = ${content}`;
-    }
-    source.insert(dep.insertPosition, content);
-
-    if (dep.stripOpt && dep.stripOpt.remove) {
-      source.replace(dep.stripOpt.start, dep.stripOpt.end, '');
+      source.insert(dep.insertPosition, content);
+    } else {
+      source.replace(dep.stripOpt.start, dep.stripOpt.end, content);
     }
   }
 }

@@ -11,6 +11,7 @@ GoogBaseGlobalDependency.Template = class GoogBaseGlobalDependencyTemplate {
     const sourceContent = source.source();
 
     const content = `
+COMPILED = true;
 goog.ENABLE_DEBUG_LOADER = false;
 module.exports = goog;`;
     source.insert(sourceContent.length, content);

@@ -27,13 +27,11 @@ class GoogRequireParserPlugin {
       } else {
         const current = this.moduleMap.requireModuleByPath(parser.state.current.request);
         const required = this.moduleMap.requireModuleByName(expr.arguments[0].value);
-        this.addGoogDependency(parser, required.path, false,
-          !current.isGoogModule ? {
-            remove: true,
-            start: expr.start,
-            end: expr.end
-          } : null
-        );
+        this.addGoogDependency(parser, required.path, false, {
+          isGoogModule: current.isGoogModule,
+          start: expr.start,
+          end: expr.end
+        });
       }
     };
     parser.hooks.call
@@ -84,6 +82,7 @@ class GoogRequireParserPlugin {
       }
     });
 
+    // support goog.declareModuleId.
     const googModuleDeclareCallback = () => {
       this.initGoog(parser);
 
