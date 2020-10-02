@@ -20,13 +20,13 @@ class GoogleClosureLibraryWebpackPlugin {
   constructor(options) {
     validateOptions(schema, options, { name: 'google-closure-library-webpack-plugin' });
     this.options = defaultsDeep({
-      goog: path.resolve('node_modules/google-closure-library/closure/goog/base.js'),
+      goog: require.resolve('google-closure-library/closure/goog/base.js'),
       sources: [],
       excludes: []
     }, options);
     this.options.goog = path.resolve(this.options.goog);
     const basename = path.basename(this.options.goog);
-    if (!fs.existsSync(this.options.goog || basename !== 'base.js')) {
+    if (!fs.existsSync(this.options.goog) || basename !== 'base.js') {
       throw new Error(
         `Unable locate Closure Library base.js file from ${this.options.goog}!!`
       );

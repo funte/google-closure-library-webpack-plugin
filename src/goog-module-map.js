@@ -37,6 +37,7 @@ class GoogModuleMap {
       this.requireModuleByPath(sourcePath);
     });
 
+    // TODO: serparate out this code.
     // analyze the Closure library dependencies file deps.js
     const googDepsPath = path.resolve(this.baseDir, 'deps.js');
     if (!fs.existsSync(googDepsPath)) {
@@ -83,8 +84,10 @@ class GoogModuleMap {
    * @return {GoogModuleData} cooked module data.
    */
   requireModuleByPath(modulePath) {
+    modulePath = path.resolve(modulePath);
+    
     var moduleData = this.path2Module.get(modulePath);
-    if (moduleData === undefined) {
+    if (moduleData === null || moduleData === undefined) {
       moduleData = new GoogModuleData(modulePath);
       this.path2Module.set(modulePath, moduleData);
     }
@@ -152,7 +155,8 @@ class GoogModuleMap {
               // in code `var Bar = goog.require('Bar')`, the ancestor type is 'VariableDeclarator';
               // in code `Bar = goog.require('Bar')`, the ancestor type is 'AssignmentExpression'; 
               // in code `foo(goog.require('Bar'))`, the ancestor type is 'CallExpression';
-              // in code `var foo = [goog.require('Bar')]`, the ancestor type if 'ArrayExpression';
+              // in code `var foo = [goog.require('Bar')]`, the ancestor type is 'ArrayExpression';
+              // in code `Bar = goog.require('Bar').default`, the ancestor type is 'MemberExpression';
               if (node.ancestor.type !== 'ExpressionStatement') {
                 if (moduleData.isGoogModule === false) {
                   throw new Error('The "goog.require" return null outside the goog module!!');

@@ -1,7 +1,7 @@
 {
   "name": "google-closure-library-webpack-plugin",
-  "version": "1.1.6",
-  "description": "Webpack plugin for generating Google Closure deps, work with closure-webpack-plugin",
+  "version": "1.1.8",
+  "description": "Webpack plugin for google-closure-library, separate from closure-webpack-plugin",
   "main": "src/index.js",
   "keywords": [],
   "author": "GuowenGao(funte@outlook.com)",
@@ -11,8 +11,14 @@
     "urls": "https://github.com/funte/google-closure-library-webpack-plugin/issues"
   },
   "license": "MIT",
+  "scripts": {
+    "test": "npm run test:lint && npm run test:unit && npm run test:coverage",
+    "test:lint": "eslint",
+    "test:unit": "mocha test",
+    "test:coverage": "nyc mocha",
+    "test:watch": "mocha --watch %TEST_FILES%"
+  },
   "dependencies": {
-    "acorn": "^7.1.1",
     "acorn-loose": "^7.0.0",
     "acorn-walk": "^7.1.1",
     "fs": "0.0.1-security",
@@ -23,7 +29,13 @@
     "webpack": "^4.42.1"
   },
   "devDependencies": {
-    "commitizen": "^4.2.1"
+    "chai": "^4.2.0",
+    "commitizen": "^4.2.1",
+    "eslint": "^7.10.0",
+    "google-closure-library": "^20200830.0.0",
+    "memfs": "^3.2.0",
+    "mocha": "^8.1.3",
+    "nyc": "^15.1.0"
   },
   "config": {
     "commitizen": {

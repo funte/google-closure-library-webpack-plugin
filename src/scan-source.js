@@ -2,29 +2,33 @@ const path = require('path');
 const fs = require('fs');
 const pig = require('slim-pig');
 
-const sepratePaths_ = (pathArray, fileCallback = null, directoryCallback = null) => {
+const sepratePaths_ = (pathArray, fileCallback, directoryCallback) => {
   if (Array.isArray(pathArray)) {
     pathArray.forEach(item => {
       sepratePaths_(item, fileCallback, directoryCallback);
     });
   } else {
     const absPath = path.resolve(pathArray);
-    const stat = fs.statSync(absPath);
-    if (stat.isFile()) {
-      if (fileCallback) {
-        fileCallback(absPath);
+    if (fs.existsSync(absPath)) {
+      const stat = fs.statSync(absPath);
+      if (stat.isFile()) {
+        if (fileCallback) {
+          fileCallback(absPath);
+        }
+      } else if (stat.isDirectory()) {
+        if (directoryCallback) {
+          directoryCallback(absPath);
+        }
+      } else {
+        throw new Error(`Unrecognized path ${pathArray}!!`);
       }
-    } else if (stat.isDirectory()) {
-      if (directoryCallback) {
-        directoryCallback(absPath);
-      }
-    } else {
-      throw new Error(`Unrecognized path ${pathArray}!!`);
     }
   }
 };
 
 module.exports = function (sources, excludes) {
+  sources = sources || [];
+  excludes = excludes || [];
   var sourceFiles = new Set();
 
   sepratePaths_(sources,

@@ -1,0 +1,18 @@
+{
+  "name": "goog-declare-example",
+  "scripts": {
+    "build": "webpack",
+    "start": "webpack-dev-server --open"
+  },
+  "devDependencies": {
+    "google-closure-library": "^20200830.0.0",
+    "google-closure-library-webpack-plugin": "^1.1.4",
+    "html-loader": "^0.5.5",
+    "html-webpack-plugin": "^3.2.0",
+    "lodash.defaultsdeep": "^4.6.1",
+    "path": "^0.12.7",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.3.9",
+    "webpack-dev-server": "^3.9.0"
+  }
+}

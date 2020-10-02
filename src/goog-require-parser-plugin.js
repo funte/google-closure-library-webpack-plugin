@@ -30,7 +30,7 @@ class GoogRequireParserPlugin {
         this.addGoogDependency(parser, required.path, false, {
           isGoogModule: current.isGoogModule,
           start: expr.start,
-          end: expr.end
+          end: expr.end - 1 // not include ';' or '.' after the goog.require
         });
       }
     };
