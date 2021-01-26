@@ -33,7 +33,6 @@ module.exports = {
       sources: [path.resolve(__dirname, 'src')]
     }),
     new HtmlPlugin({
-      chunks: ['goog-require-example'],
       template: 'index.ejs',
       title: 'goog.require example'
     })
