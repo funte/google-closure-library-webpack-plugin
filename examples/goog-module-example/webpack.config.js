@@ -8,7 +8,7 @@ module.exports = {
   mode: MODE,
   devtool: 'cheap-module-source-map',
   entry: {
-    'index': './src/index.js',
+    'goog-module-example': './src/index.js',
   },
   output: {
     path: path.resolve(__dirname, 'build'),
