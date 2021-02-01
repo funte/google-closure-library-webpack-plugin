@@ -29,13 +29,14 @@ GoogDependency.Template = class GoogDependencyTemplate {
       return;
     }
 
-    let content = `__webpack_require__(${JSON.stringify(dep.module.id)})`;
+    let content = `__webpack_require__(${JSON.stringify(dep.module.id)});\n`;
     if (dep.isBase) {
-      content = `var goog = ${content};`;
-      source.insert(dep.insertPosition, content);
+      content = `var goog = ${content}`;
     } else {
-      source.replace(dep.stripOpt.start, dep.stripOpt.end, content);
+      // Strip the original 'goog.require' statement.
+      source.replace(dep.stripOpt.start, dep.stripOpt.end + 2/*include the semicolon and \n*/, '');
     }
+    source.insert(dep.insertPosition, content);
   }
 }
 
