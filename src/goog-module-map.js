@@ -161,7 +161,7 @@ class GoogModuleMap {
                 if (moduleData.isGoogModule === false) {
                   throw new Error('The "goog.require" return null outside the goog module!!');
                 } else if (moduleData.isGoogModule === null) {
-                  throw new Error(`The "goog.module" or "goog.declareModuleId" must go fist line!!`);
+                  throw new Error(`The "goog.module" or "goog.declareModuleId" must go first line!!`);
                 }
               } else {
                 if (moduleData.isGoogModule === null) {

@@ -27,11 +27,11 @@ class GoogRequireParserPlugin {
       } else {
         const current = this.moduleMap.requireModuleByPath(parser.state.current.request);
         const required = this.moduleMap.requireModuleByName(expr.arguments[0].value);
-        this.addGoogDependency(parser, required.path, false, {
-          isGoogModule: current.isGoogModule,
+        this.addGoogDependency(parser, required.path, false, 
+          current.isGoogModule === false ? {
           start: expr.start,
           end: expr.end - 1 // not include ';' or '.' after the goog.require
-        });
+        }: null);
       }
     };
     parser.hooks.call

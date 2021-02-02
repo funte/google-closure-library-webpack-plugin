@@ -29,14 +29,16 @@ GoogDependency.Template = class GoogDependencyTemplate {
       return;
     }
 
-    let content = `__webpack_require__(${JSON.stringify(dep.module.id)});\n`;
+    let content = `__webpack_require__(${JSON.stringify(dep.module.id)})`;
     if (dep.isBase) {
       content = `var goog = ${content}`;
-    } else {
-      // Strip the original 'goog.require' statement.
-      source.replace(dep.stripOpt.start, dep.stripOpt.end + 2/*include the semicolon and \n*/, '');
     }
+    content += ';\n';
     source.insert(dep.insertPosition, content);
+    if (dep.stripOpt) {
+      // Strip the original 'goog.require' statement if need.
+      source.replace(dep.stripOpt.start, dep.stripOpt.end + 1, '');
+    }
   }
 }
 
