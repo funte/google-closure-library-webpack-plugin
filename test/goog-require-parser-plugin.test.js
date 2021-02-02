@@ -25,9 +25,9 @@ describe('Test goog require parser plugin', function () {
     option.context = path.resolve(__dirname, '../examples/goog-declare-example');
     const stats = await helper_compile(option);
 
-    assert.equal(stats.compilation.errors.length, 0);
+    assert.equal(stats.compilation.errors.length, 0, "Compilation error");
     const fs = stats.compilation.compiler.outputFileSystem;
-    assert.isTrue(fs.existsSync(path.resolve(stats.compilation.compiler.outputPath, 'index.js')));
+    assert.isTrue(fs.existsSync(path.resolve(stats.compilation.compiler.outputPath, 'goog-declare-example.js')));
     // TODO: test bundle file.
   });
 
@@ -36,9 +36,9 @@ describe('Test goog require parser plugin', function () {
     option.context = path.resolve(__dirname, '../examples/goog-module-example');
     const stats = await helper_compile(option);
 
-    assert.equal(stats.compilation.errors.length, 0);
+    assert.equal(stats.compilation.errors.length, 0, "Compilation error");
     const fs = stats.compilation.compiler.outputFileSystem;
-    assert.isTrue(fs.existsSync(path.resolve(stats.compilation.compiler.outputPath, 'index.js')));
+    assert.isTrue(fs.existsSync(path.resolve(stats.compilation.compiler.outputPath, 'goog-module-example.js')));
     // TODO: test bundle file.
   });
 
@@ -47,9 +47,9 @@ describe('Test goog require parser plugin', function () {
     option.context = path.resolve(__dirname, '../examples/goog-require-example');
     const stats = await helper_compile(option);
 
-    assert.equal(stats.compilation.errors.length, 0);
+    assert.equal(stats.compilation.errors.length, 0, "Compilation error");
     const fs = stats.compilation.compiler.outputFileSystem;
-    assert.isTrue(fs.existsSync(path.resolve(stats.compilation.compiler.outputPath, 'index.js')));
+    assert.isTrue(fs.existsSync(path.resolve(stats.compilation.compiler.outputPath, 'goog-require-example.js')));
     // TODO: test bundle file.
   });
 });

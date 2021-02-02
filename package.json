@@ -15,8 +15,7 @@
     "test": "npm run test:lint && npm run test:unit && npm run test:coverage",
     "test:lint": "eslint",
     "test:unit": "mocha test",
-    "test:coverage": "nyc mocha",
-    "test:watch": "mocha --watch %TEST_FILES%"
+    "test:coverage": "nyc mocha"
   },
   "dependencies": {
     "acorn-loose": "^7.0.0",
