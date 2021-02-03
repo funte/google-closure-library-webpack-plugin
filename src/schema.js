@@ -15,5 +15,9 @@ module.exports = {
       type: 'array',
       items: { type: 'string' },
     }
+    // TODO: Add compile flag options?
+    // If compile flag set, this plugin will going to:
+    //  1. Overwrite the COMPILED to true.
+    //  2. Strip all goog.require, goog.provide and  related module functions.
   }
 };

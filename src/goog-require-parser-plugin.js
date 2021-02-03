@@ -27,6 +27,8 @@ class GoogRequireParserPlugin {
       } else {
         const current = this.moduleMap.requireModuleByPath(parser.state.current.request);
         const required = this.moduleMap.requireModuleByName(expr.arguments[0].value);
+        // ISSUE: Babel-loader trigger a infinite loop.
+        // (https://github.com/funte/google-closure-library-webpack-plugin/issues/2)
         this.addGoogDependency(parser, required.path, false, 
           current.isGoogModule === false ? {
           start: expr.start,
