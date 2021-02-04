@@ -1,3 +1,4 @@
+const path = require('path');
 const GoogDependency = require('./dependencies/goog-dependency');
 const GoogBaseGlobalDependency = require('./dependencies/goog-base-global');
 const GoogLoaderPrefixDependency = require('./dependencies/goog-loader-prefix-dependency');
@@ -25,12 +26,10 @@ class GoogRequireParserPlugin {
           this.addLoaderDependency(parser, false);
         }
       } else {
-        const current = this.moduleMap.requireModuleByPath(parser.state.current.request);
-        const required = this.moduleMap.requireModuleByName(expr.arguments[0].value);
-        // ISSUE: Babel-loader trigger a infinite loop.
-        // (https://github.com/funte/google-closure-library-webpack-plugin/issues/2)
-        this.addGoogDependency(parser, required.path, false, 
-          current.isGoogModule === false ? {
+        const currentModuleData = this.moduleMap.requireModuleByPath(parser.state.current.resource);
+        const requiredModuleData = this.moduleMap.requireModuleByName(expr.arguments[0].value);
+        this.addGoogDependency(parser, requiredModuleData.path, false, 
+          currentModuleData.isGoogModule === false ? {
           start: expr.start,
           end: expr.end - 1 // not include ';' or '.' after the goog.require
         }: null);
@@ -50,7 +49,7 @@ class GoogRequireParserPlugin {
         expr.declarations.length === 1 &&
         expr.declarations[0].id.name === 'goog' &&
         parser.state.current &&
-        parser.state.current.userRequest === this.moduleMap.basePath
+        parser.state.current.resource === this.moduleMap.basePath
       ) {
         parser.state.current.addDependency(new GoogBaseGlobalDependency());
       }
@@ -135,11 +134,11 @@ class GoogRequireParserPlugin {
 
   addLoaderDependency(parser, isGoogModule) {
     parser.state.current.addDependency(new GoogLoaderPrefixDependency(
-      parser.state.current.request, isGoogModule, 0
+      parser.state.current.resource, isGoogModule, 0
     ));
     const sourceLength = parser.state.current._source.source().length;
     parser.state.current.addDependency(new GoogLoaderSuffixDependency(
-      parser.state.current.request, isGoogModule, sourceLength
+      parser.state.current.resource, isGoogModule, sourceLength
     ));
   }
 
