@@ -20,7 +20,8 @@ const sepratePaths_ = (pathArray, fileCallback, directoryCallback) => {
           directoryCallback(absPath);
         }
       } else {
-        throw new Error(`Unrecognized path ${pathArray}!!`);
+        // Skip.
+        // throw new Error(`Unrecognized path \"${absPath}\"!!`);
       }
     }
   }
