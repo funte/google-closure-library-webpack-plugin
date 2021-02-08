@@ -1,4 +1,4 @@
-// defines a goog module with namespace ID 'App'.
+// Defines a goog module with namespace id 'App'.
 goog.module('Foo');
 
 const PI = 3.14;

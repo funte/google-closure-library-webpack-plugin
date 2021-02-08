@@ -1,9 +1,9 @@
-/* reference Closure file from ES6 module. */
+/* Reference Closure file from ES6 module. */
 
-// associates an ES6 module with a goog module ID 'Foo' so that is available
-// via goog.require.
+// Associates an ES6 module with a goog module id 'Foo', so that is available
+// required by `goog.require`.
 goog.declareModuleId('Foo');
-// goog.require with a return value just work in goog module.
+// `goog.require` with a return value just work in goog module.
 var Bar = goog.require('Bar');
-// export Bar as default in ES6 module.
+// Export Bar as default in ES6 module.
 export default Bar;

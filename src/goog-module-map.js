@@ -6,10 +6,10 @@ const scanSource = require('./scan-source');
 
 class GoogModuleData {
   /** 
-   * Constrct a module data for a Closure file.
-   * @param {string} modulePath the Closure file's full path.
+   * Constrct a module data.
+   * @param {string} modulePath The module path.
    * @param {string} isGoogModule Closure or ES6 files are goog module which 
-   *  provide namespaces by goog.module or goog.declareModuleId; else provide
+   *  provide namespaces by goog.module or goog.declareModuleId, else provide
    *  by goog.provide are not goog module.
    */
   constructor(modulePath, isGoogModule = null) {
@@ -29,16 +29,16 @@ class GoogModuleMap {
     this.namespace2Path = new Map();
     this.path2Module = new Map();
 
-    // find js source files.
+    // Scan source files.
     var sourceFiles = scanSource(options.sources, options.excludes);
 
-    // analyze js source files.
+    // Analyze source files.
     sourceFiles.forEach(sourcePath => {
       this.requireModuleByPath(sourcePath);
     });
 
     // TODO: serparate out this code.
-    // analyze the Closure library dependencies file deps.js
+    // Analyze the Closure-library dependencies file deps.js
     const googDepsPath = path.resolve(this.baseDir, 'deps.js');
     if (!fs.existsSync(googDepsPath)) {
       throw new Error(
@@ -60,12 +60,12 @@ class GoogModuleMap {
           const modulePath = path.resolve(this.baseDir, node.arguments[0].value);
           if (fs.existsSync(modulePath)) {
             var moduleData = new GoogModuleData(modulePath);
-            // resolve provides.
+            // Analyze provided namespaces.
             node.arguments[1].elements.forEach(arg => {
               this.namespace2Path.set(arg.value, modulePath);
               moduleData.provides.add(arg.value);
             });
-            // resolve requires.
+            // Analyze required namespaces.
             node.arguments[2].elements.forEach(arg => {
               moduleData.requires.add(arg.value);
             });
@@ -79,13 +79,13 @@ class GoogModuleMap {
   }
 
   /** 
-   * Get cooked module data from a Cloure file's full path.
-   * @param {string} modulePath the Closure file's full path.
-   * @return {GoogModuleData} cooked module data.
+   * Get module data from path.
+   * @param {string} modulePath The module path.
+   * @return {GoogModuleData} Module data or null.
    */
   requireModuleByPath(modulePath) {
     modulePath = path.resolve(modulePath);
-    
+
     var moduleData = this.path2Module.get(modulePath);
     if (moduleData === null || moduleData === undefined) {
       moduleData = new GoogModuleData(modulePath);
@@ -100,9 +100,9 @@ class GoogModuleMap {
   }
 
   /** 
-   * Get cooked module data from a provided namespace.
-   * @param {string} namespace Closure namespace.
-   * @return {GoogModuleData} cooked module data.
+   * Get module data from a provided namespace.
+   * @param {string} namespace The namespace to search.
+   * @return {GoogModuleData} Module data or null.
    */
   requireModuleByName(namespace) {
     const modulePath = this.namespace2Path.get(namespace);
@@ -116,7 +116,7 @@ class GoogModuleMap {
   require_(moduleData) {
     moduleData.cooked = true;
 
-    // the parser's program hooks always trigged finally after all expressions
+    // The parser's program hooks always trigged finally after all expressions
     // parsed, so if you want to find out the current node's ancestor and more,
     // you have to build an extra AST ahead the webpack parser start.
     moduleData.ast = astUtils.buildAcornTree(moduleData.path, {
@@ -136,7 +136,7 @@ class GoogModuleMap {
       }
     );
 
-    // extract module data.
+    // Analyze the module.
     walk.simple(moduleData.ast, {
       CallExpression: node => {
         if (
@@ -150,13 +150,18 @@ class GoogModuleMap {
           }
           switch (node.callee.property.name) {
             case 'require':
-              // traditional goog.require only could be child of 'ExpressionStatement'
-              // node, if the parent node is other types, that's a goog module. 
-              // in code `var Bar = goog.require('Bar')`, the ancestor type is 'VariableDeclarator';
-              // in code `Bar = goog.require('Bar')`, the ancestor type is 'AssignmentExpression'; 
-              // in code `foo(goog.require('Bar'))`, the ancestor type is 'CallExpression';
-              // in code `var foo = [goog.require('Bar')]`, the ancestor type is 'ArrayExpression';
-              // in code `Bar = goog.require('Bar').default`, the ancestor type is 'MemberExpression';
+              // In acorn AST, the traditional goog.require only could be child of 
+              // `ExpressionStatement` node, so if parent node is other type, it's 
+              // should a goog module.
+              //
+              // The ancestors type list:
+              // | Expression                           | Ancestor node type      |
+              // | ------------------------------------ | ----------------------- |
+              // | `var Bar = goog.require('Bar')`      |'VariableDeclarator'     |
+              // | `Bar = goog.require('Bar')`          | |'AssignmentExpression' |
+              // | `foo(goog.require('Bar'))`           | |'CallExpression'       |
+              // | `var foo = [goog.require('Bar')]`    |'ArrayExpression'        |
+              // | `Bar = goog.require('Bar').default`  | |'MemberExpression'     |
               if (node.ancestor.type !== 'ExpressionStatement') {
                 if (moduleData.isGoogModule === false) {
                   throw new Error('The "goog.require" return null outside the goog module!!');
@@ -171,7 +176,7 @@ class GoogModuleMap {
               moduleData.requires.add(node.arguments[0].value);
               break;
             case 'provide':
-              // goog.privide not allowed in goog module.
+              // Unexpected `goog.privide` in goog module.
               if (moduleData.isGoogModule === true) {
                 throw new Error(`Unexpected "goog.provide" in goog module!!`);
               }

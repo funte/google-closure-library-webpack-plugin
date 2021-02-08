@@ -1,5 +1,5 @@
-// defines a goog module with ID 'Bar'.
+// Defines a goog module with id 'Bar'.
 goog.module('Bar');
 var PI = 3.14;
-// export by key.
+// Export by key.
 exports = { PI };

@@ -1,6 +1,6 @@
-// 1. expose goog object in base.js as property of the global window object;
-// 2. return goog object support webpack require;
-// 3. disable debug loader;
+// 1. Expose goog object in base.js as property of the global window object;
+// 2. Return goog object support webpack require;
+// 3. Disable debug loader;
 
 const Dependency = require('webpack/lib/Dependency');
 

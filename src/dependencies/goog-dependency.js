@@ -37,7 +37,7 @@ GoogDependency.Template = class GoogDependencyTemplate {
     source.insert(dep.insertPosition, content);
     if (dep.stripOpt) {
       // Strip the original 'goog.require' statement if need.
-      source.replace(dep.stripOpt.start, dep.stripOpt.end + 1, '');
+      source.replace(dep.stripOpt.start, dep.stripOpt.end, '');
     }
   }
 }

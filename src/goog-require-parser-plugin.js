@@ -15,7 +15,7 @@ class GoogRequireParserPlugin {
   }
 
   apply(parser) {
-    // support goog.require and goog.provide
+    // Support `goog.require` and `goog.provide`.
     const googRequireProvideCallback = (expr) => {
       this.initGoog(parser);
 
@@ -31,7 +31,7 @@ class GoogRequireParserPlugin {
         this.addGoogDependency(parser, requiredModuleData.path, false, 
           currentModuleData.isGoogModule === false ? {
           start: expr.start,
-          end: expr.end - 1 // not include ';' or '.' after the goog.require
+          end: expr.end
         }: null);
       }
     };
@@ -42,7 +42,7 @@ class GoogRequireParserPlugin {
       .for('goog.provide')
       .tap(this.PLUGIN, googRequireProvideCallback);
 
-    // expose goog object
+    // Expose goog object.
     parser.hooks.statement.tap(this.PLUGIN, (expr) => {
       if (
         expr.type === 'VariableDeclaration' &&
@@ -55,7 +55,7 @@ class GoogRequireParserPlugin {
       }
     });
 
-    // support goog.module in goog module system.
+    // Support goog.module in goog module system.
     parser.hooks.call.for('goog.module').tap(this.PLUGIN, (expr) => {
       this.initGoog(parser);
 
@@ -71,8 +71,8 @@ class GoogRequireParserPlugin {
       }
     });
 
-    // support Closure module exports.
-    // must after goog.module parsed, just work in Closure module.
+    // Support goog module exports.
+    // Must after goog.module parsed, just work in goog module.
     parser.hooks.assign.for('exports').tap(this.PLUGIN, (expr) => {
       const prefixDep = parser.state.current.dependencies.find(
         (dep) => dep instanceof GoogLoaderPrefixDependency);
@@ -83,7 +83,7 @@ class GoogRequireParserPlugin {
       }
     });
 
-    // support goog.declareModuleId.
+    // Support goog.declareModuleId.
     const googModuleDeclareCallback = () => {
       this.initGoog(parser);
 

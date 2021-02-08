@@ -1,5 +1,5 @@
 # goog-declare-example
-Using `goog.declare` show how make cross reference between ES6 and Closure module.  
+Using `goog.declare` show how make cross reference between ES6 and goog module.  
 
 To run this app with NPM cli:  
 ```sh

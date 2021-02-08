@@ -1,4 +1,4 @@
-// support directly assign to exports in goog module system.
+// Support directly assign to exports in goog module.
 // var PI = 3.14;
 // exports = { PI };
 
