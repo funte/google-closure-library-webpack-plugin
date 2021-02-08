@@ -8,21 +8,23 @@ class GoogModuleData {
   /** 
    * Constrct a module data.
    * @param {string} modulePath The module path.
-   * @param {string} isGoogModule Closure or ES6 files are goog module which 
-   *  provide namespaces by goog.module or goog.declareModuleId, else provide
-   *  by goog.provide are not goog module.
    */
-  constructor(modulePath, isGoogModule = null) {
-    this.cooked = false;
+  constructor(modulePath) {
+    this.loaded = false;
 
     this.path = modulePath;
-    this.isGoogModule = isGoogModule;
+    // Closure or ES6 files are goog module which provide namespaces by `goog.module` 
+    // or `goog.declareModuleId`, else provide by `goog.provide` are not goog module.
+    this.isGoogModule = null;
     this.requires = new Set();
     this.provides = new Set();
   }
 }
 
 class GoogModuleMap {
+  /** 
+   * @param {schema} options See `./schema.js`.
+   */
   constructor(options) {
     this.basePath = path.resolve(options.goog);
     this.baseDir = path.dirname(this.basePath);
@@ -38,11 +40,13 @@ class GoogModuleMap {
     });
 
     // TODO: serparate out this code.
-    // Analyze the Closure-library dependencies file deps.js
+    // Analyze the Closure-library dependencies file `deps.js` and cache the 
+    // namespace dependencies in Closure-library but don't analyze the module 
+    // data until required.
     const googDepsPath = path.resolve(this.baseDir, 'deps.js');
     if (!fs.existsSync(googDepsPath)) {
       throw new Error(
-        `Unable to locate the Closure library dependencies file from "${googDepsPath}"!!`
+        `Missing the Closure-library dependencies file: \"${googDepsPath}\"!!`
       );
     }
     const googDepsAst = astUtils.buildAcornTree(googDepsPath, {
@@ -70,7 +74,6 @@ class GoogModuleMap {
               moduleData.requires.add(arg.value);
             });
 
-            // this.require_(moduleData);
             this.path2Module.set(modulePath, moduleData);
           }
         }
@@ -87,13 +90,13 @@ class GoogModuleMap {
     modulePath = path.resolve(modulePath);
 
     var moduleData = this.path2Module.get(modulePath);
-    if (moduleData === null || moduleData === undefined) {
+    if (!Boolean(moduleData)) {
       moduleData = new GoogModuleData(modulePath);
       this.path2Module.set(modulePath, moduleData);
     }
 
-    if (!moduleData.cooked) {
-      this.require_(moduleData);
+    if (!moduleData.loaded) {
+      this.load_(moduleData);
     }
 
     return moduleData;
@@ -106,25 +109,26 @@ class GoogModuleMap {
    */
   requireModuleByName(namespace) {
     const modulePath = this.namespace2Path.get(namespace);
-    if (modulePath === null || modulePath === undefined) {
+    if (!Boolean(modulePath)) {
       throw new Error(`Unknow namespace ${namespace}!!`);
     }
 
     return this.requireModuleByPath(modulePath);
   }
 
-  require_(moduleData) {
-    moduleData.cooked = true;
+  load_(moduleData) {
+    moduleData.loaded = true;
 
     // The parser's program hooks always trigged finally after all expressions
     // parsed, so if you want to find out the current node's ancestor and more,
     // you have to build an extra AST ahead the webpack parser start.
     moduleData.ast = astUtils.buildAcornTree(moduleData.path, {
       ecmaVersion: 2017,
-      sourceType: 'module'
+      sourceType: 'module',
+      locations: true
     });
-    if (moduleData.ast === null || moduleData.ast === undefined) {
-      throw new Error(`Acorn failed to parse "${moduleData.path}"!!`);
+    if (!Boolean(moduleData.ast)) {
+      throw new Error(`Acorn failed to parse \"${moduleData.path}\"!!`);
     }
     astUtils.walkAcornTree(moduleData.ast,
       (childNode, ancestor) => {
@@ -139,38 +143,40 @@ class GoogModuleMap {
     // Analyze the module.
     walk.simple(moduleData.ast, {
       CallExpression: node => {
+        // In acorn AST, the traditional goog.require only could be child of 
+        // `ExpressionStatement` node, so if parent node is other type, it's 
+        // should a goog module.
+        //
+        // The ancestors type list:
+        // | Expression                           | Ancestor node type      |
+        // | ------------------------------------ | ----------------------- |
+        // | `var Bar = goog.require('Bar')`      | 'VariableDeclarator'    |
+        // | `Bar = goog.require('Bar')`          | 'AssignmentExpression'  |
+        // | `foo(goog.require('Bar'))`           | 'CallExpression'        |
+        // | `var foo = [goog.require('Bar')]`    | 'ArrayExpression'       |
+        // | `Bar = goog.require('Bar').default`  | 'MemberExpression'      |
         if (
           node.callee.type === 'MemberExpression' &&
           node.callee.object.type === 'Identifier' &&
           node.callee.object.name === 'goog' &&
           node.callee.property.type === 'Identifier'
         ) {
-          if (node.ancestor === null || node.ancestor === undefined) {
-            throw new Error('Internal error, broken AST tree!!');
+          if (!Boolean(node.ancestor)) {
+            throw new Error(`Internal error, broken AST tree for \"${moduleData.path}\"!!`);
           }
           switch (node.callee.property.name) {
             case 'require':
-              // In acorn AST, the traditional goog.require only could be child of 
-              // `ExpressionStatement` node, so if parent node is other type, it's 
-              // should a goog module.
-              //
-              // The ancestors type list:
-              // | Expression                           | Ancestor node type      |
-              // | ------------------------------------ | ----------------------- |
-              // | `var Bar = goog.require('Bar')`      |'VariableDeclarator'     |
-              // | `Bar = goog.require('Bar')`          | |'AssignmentExpression' |
-              // | `foo(goog.require('Bar'))`           | |'CallExpression'       |
-              // | `var foo = [goog.require('Bar')]`    |'ArrayExpression'        |
-              // | `Bar = goog.require('Bar').default`  | |'MemberExpression'     |
-              if (node.ancestor.type !== 'ExpressionStatement') {
-                if (moduleData.isGoogModule === false) {
-                  throw new Error('The "goog.require" return null outside the goog module!!');
-                } else if (moduleData.isGoogModule === null) {
-                  throw new Error(`The "goog.module" or "goog.declareModuleId" must go first line!!`);
-                }
-              } else {
+              if (node.ancestor.type === 'ExpressionStatement') {
                 if (moduleData.isGoogModule === null) {
                   moduleData.isGoogModule = false;
+                }
+              } else {
+                if (moduleData.isGoogModule === false) {
+                  const location = `${moduleData.path}:${node.loc.start.line}:${node.loc.start.column}`;
+                  throw new Error(`The \"goog.require\" return null outside the goog module at \"${location}\"!!`);
+                } else if (moduleData.isGoogModule === null) {
+                  const location = `${moduleData.path}:${node.loc.start.line}:${node.loc.start.column}`;
+                  throw new Error(`The \"goog.module\" or \"goog.declareModuleId\" must go first line at \"${location}\"!!`);
                 }
               }
               moduleData.requires.add(node.arguments[0].value);
@@ -178,7 +184,8 @@ class GoogModuleMap {
             case 'provide':
               // Unexpected `goog.privide` in goog module.
               if (moduleData.isGoogModule === true) {
-                throw new Error(`Unexpected "goog.provide" in goog module!!`);
+                const location = `${moduleData.path}:${node.loc.start.line}:${node.loc.start.column}`;
+                throw new Error(`Unexpected \"goog.provide\" in goog module at \"${location}\"!!`);
               }
               moduleData.isGoogModule = false;
               moduleData.provides.add(node.arguments[0].value);
@@ -187,7 +194,8 @@ class GoogModuleMap {
             case 'module':
             case 'declareModuleId':
               if (moduleData.isGoogModule === false) {
-                throw new Error(`The "goog.module" or "goog.declareModuleId" must go fist line!!`);
+                const location = `${moduleData.path}:${node.loc.start.line}:${node.loc.start.column}`;
+                throw new Error(`Unexpected \"goog.module/declareModuleId\" at \"${location}\"!!`);
               }
               moduleData.isGoogModule = true;
               moduleData.provides.add(node.arguments[0].value);

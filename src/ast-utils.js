@@ -1,12 +1,13 @@
 const fs = require('fs');
+const path = require('path');
 const acornLoose = require('acorn-loose');
 
 /** 
  * Build an acorn AST.
- * @param {string} modulePath file path to parse.
- * @param {object} opt parse options.
- *    see https://www.npmjs.com/package/acorn#interface.
- * @return {Node} acorn ast.
+ * @param {string} modulePath File path to parse.
+ * @param {object} opt Parse options.
+ *    See https://www.npmjs.com/package/acorn#interface.
+ * @return {Node} Acorn AST.
  */
 const buildAcornTree = function (modulePath, opt) {
   const moduleContents = fs.readFileSync(modulePath, 'utf8');
@@ -15,21 +16,21 @@ const buildAcornTree = function (modulePath, opt) {
 
 /** 
  * Walk node tree.
- * @param {function(childNode, node)} findNodeCallback called when find a child
+ * @param {function(childNode, node)} findNodeCallback Called when find a child
  *  node.
- * @param {function(node, prop)} stopCallback called when start search current node
- *  node's property, if return true, stop search.
+ * @param {function(node, prop)} shouldStopCallback Called everytime when start 
+ *  search current node's property, if return true, stop search.
  */
-const walkAcornTree = function (node, findNodeCallback, stopCallback) {
+const walkAcornTree = function (node, findNodeCallback, shouldStopCallback) {
   if (node === null || node === undefined) {
     return;
   }
 
   findNodeCallback(node, null);
 
-  function innerWalk(node, findNodeCallback, stopCallback) {
+  function innerWalk(node, findNodeCallback, shouldStopCallback) {
     Object.keys(node).forEach(prop => {
-      if (stopCallback(node, prop)) {
+      if (shouldStopCallback(node, prop)) {
         return;
       }
 
@@ -38,24 +39,24 @@ const walkAcornTree = function (node, findNodeCallback, stopCallback) {
       valueAsArray.forEach(childNode => {
         if (typeof childNode.type === 'string') {
           findNodeCallback(childNode, node);
-          innerWalk(childNode, findNodeCallback, stopCallback);
+          innerWalk(childNode, findNodeCallback, shouldStopCallback);
         }
       });
     });
   }
 
-  innerWalk(node, findNodeCallback, stopCallback)
+  innerWalk(node, findNodeCallback, shouldStopCallback)
 };
 
 /** 
  * Find the equality node from acorn ast.
- * @param {Node} node node from webpack javascriptparse.
- * @param {Node} acornAst acorn ast get from buildAcornTree.
+ * @param {Node} node Node from webpack javascriptparse.
+ * @param {Node} acornAst Acorn AST build from `buildAcornTree`.
  * @return {Node} null if not found.
  */
-const webpackNode2AcornNode = function(node, acornAst) {
+const webpackNode2AcornNode = function (node, acornAst) {
   // TODO: Find the equality node from acorn ast.
-  return null;
+  throw new Error(`TODO: Find the equality node from acorn ast.`);
 }
 
 module.exports = {

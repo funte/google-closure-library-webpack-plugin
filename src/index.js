@@ -17,6 +17,9 @@ const GoogleExportsDependency = require('./dependencies/goog-exports-dependency'
 const PLUGIN = { name: 'GoogleClosureLibraryWebpackPlugin' };
 
 class GoogleClosureLibraryWebpackPlugin {
+  /** 
+   * @param {schema} options See `./schema.js`.
+   */
   constructor(options) {
     validateOptions(schema, options, { name: 'google-closure-library-webpack-plugin' });
     this.options = defaultsDeep({
@@ -39,6 +42,19 @@ class GoogleClosureLibraryWebpackPlugin {
   }
 
   apply(compiler) {
+    // Watch the files change, see https://stackoverflow.com/a/55139759/5906199.
+    compiler.hooks.watchRun.tap(PLUGIN, (compiler) => {
+      const changedTimes = compiler.watchFileSystem.watcher.mtimes;
+      const changedFiles = Object.keys(changedTimes)
+        .map(file => `\n  ${file}`)
+        .join('');
+      if (changedFiles.length) {
+        console.log("====================================")
+        console.log('NEW BUILD FILES CHANGED:', changedFiles);
+        console.log("====================================")
+      }
+    });
+
     compiler.hooks.compilation.tap(PLUGIN, (compilation, params) => {
       var { normalModuleFactory } = params;
 

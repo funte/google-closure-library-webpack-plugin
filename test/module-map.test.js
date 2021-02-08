@@ -55,21 +55,21 @@ describe('Test module map', function () {
       path.resolve(__dirname, '../examples/goog-declare-example/src/index.js')
     );
     assert.exists(moduleData);
-    assert.isTrue(moduleData.cooked);
+    assert.isTrue(moduleData.loaded);
     assert.isTrue(moduleData.isGoogModule);
     assert.equal(googDeclareModuleMap.requireModuleByName('App'), moduleData);
     moduleData = googDeclareModuleMap.requireModuleByPath(
       path.resolve(__dirname, '../examples/goog-declare-example/src/foo.js')
     );
     assert.exists(moduleData);
-    assert.isTrue(moduleData.cooked);
+    assert.isTrue(moduleData.loaded);
     assert.isTrue(moduleData.isGoogModule);
     assert.equal(googDeclareModuleMap.requireModuleByName('Foo'), moduleData);
     moduleData = googDeclareModuleMap.requireModuleByPath(
       path.resolve(__dirname, '../examples/goog-declare-example/src/bar.js')
     );
     assert.exists(moduleData);
-    assert.isTrue(moduleData.cooked);
+    assert.isTrue(moduleData.loaded);
     assert.isTrue(moduleData.isGoogModule);
     assert.equal(googDeclareModuleMap.requireModuleByName('Bar'), moduleData);
 
@@ -77,13 +77,13 @@ describe('Test module map', function () {
       path.resolve(__dirname, '../examples/goog-module-example/src/index.js')
     );
     assert.exists(moduleData);
-    assert.isTrue(moduleData.cooked);
+    assert.isTrue(moduleData.loaded);
     assert.isNotTrue(moduleData.isGoogModule);
     moduleData = googModuleModuleMap.requireModuleByPath(
       path.resolve(__dirname, '../examples/goog-module-example/src/foo.js')
     );
     assert.exists(moduleData);
-    assert.isTrue(moduleData.cooked);
+    assert.isTrue(moduleData.loaded);
     assert.isTrue(moduleData.isGoogModule);
     assert.equal(googModuleModuleMap.requireModuleByName('Foo'), moduleData);
 
@@ -91,13 +91,13 @@ describe('Test module map', function () {
       path.resolve(__dirname, '../examples/goog-require-example/src/index.js')
     );
     assert.exists(moduleData);
-    assert.isTrue(moduleData.cooked);
+    assert.isTrue(moduleData.loaded);
     assert.isNotTrue(moduleData.isGoogModule);
     moduleData = googRequireModuleMap.requireModuleByPath(
       path.resolve(__dirname, '../examples/goog-require-example/src/foo.js')
     );
     assert.exists(moduleData);
-    assert.isTrue(moduleData.cooked);
+    assert.isTrue(moduleData.loaded);
     assert.isNotTrue(moduleData.isGoogModule);
     assert.equal(googRequireModuleMap.requireModuleByName('Foo'), moduleData);
 
