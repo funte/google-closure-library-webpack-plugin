@@ -3,7 +3,11 @@ const path = require('path');
 const { createFsFromVolume, Volume } = require('memfs');
 const webpack = require('webpack');
 
-describe('Test goog require parser plugin', function () {
+// How test webpack in memory? See:
+//  1. https://github.com/webpack/webpack/blob/master/test/Stats.test.js 
+//  2. https://stackoverflow.com/questions/38779924/compiling-webpack-in-memory-but-resolving-to-node-modules-on-disk
+
+describe('Test \"GoogRequireParserPlugin\"', function () {
   const helper_compile = (options) => {
     return new Promise((resolve, reject) => {
       const compiler = webpack(options);
@@ -20,7 +24,7 @@ describe('Test goog require parser plugin', function () {
     });
   };
 
-  it('Test pack goog-declare-example', async () => {
+  it('Test build goog-declare-example', async () => {
     const option = require('../examples/goog-declare-example/webpack.config');
     option.context = path.resolve(__dirname, '../examples/goog-declare-example');
     const stats = await helper_compile(option);
@@ -31,7 +35,7 @@ describe('Test goog require parser plugin', function () {
     // TODO: test bundle file.
   });
 
-  it('Test pack goog-module-example', async () => {
+  it('Test build goog-module-example', async () => {
     const option = require('../examples/goog-module-example/webpack.config');
     option.context = path.resolve(__dirname, '../examples/goog-module-example');
     const stats = await helper_compile(option);
@@ -42,7 +46,7 @@ describe('Test goog require parser plugin', function () {
     // TODO: test bundle file.
   });
 
-  it('Test pack goog-require-example', async () => {
+  it('Test build goog-require-example', async () => {
     const option = require('../examples/goog-require-example/webpack.config');
     option.context = path.resolve(__dirname, '../examples/goog-require-example');
     const stats = await helper_compile(option);

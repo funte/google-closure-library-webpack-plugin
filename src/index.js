@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const pig = require('slim-pig');
 const validateOptions = require('schema-utils');
 const schema = require('./schema');
 const defaultsDeep = require('lodash.defaultsdeep');
@@ -44,15 +45,46 @@ class GoogleClosureLibraryWebpackPlugin {
   apply(compiler) {
     // Watch the files change, see https://stackoverflow.com/a/55139759/5906199.
     compiler.hooks.watchRun.tap(PLUGIN, (compiler) => {
-      const changedTimes = compiler.watchFileSystem.watcher.mtimes;
-      const changedFiles = Object.keys(changedTimes)
-        .map(file => `\n  ${file}`)
-        .join('');
-      if (changedFiles.length) {
-        console.log("====================================")
-        console.log('NEW BUILD FILES CHANGED:', changedFiles);
-        console.log("====================================")
+      let changed = Object.keys(compiler.watchFileSystem.watcher.mtimes);
+      let dirChanged = new Set();
+      let filesChanged = new Set();
+      let filesRemoved = new  Set();
+      pig.fs.separateFilesDirs(changed,
+        file => {
+          if (this.moduleMap.files_.filter(file)) {
+            if (fs.existsSync(file)) {
+              filesChanged.add(file);
+            } else {
+              filesRemoved.add(file);
+            }
+          }
+        },
+        dir => {
+          // Has directory add or delete.
+          if (this.moduleMap.files_.filter(dir)) {
+            dirChanged.add(dir);
+          }
+        }
+      );
+      if (dirChanged.size) {
+        this.moduleMap.scan();
       }
+      if (filesChanged.size) {
+        this.moduleMap.updateModules(Array.from(filesChanged));
+      }
+      if (filesRemoved.size) {
+        this.moduleMap.deleteModules(Array.from(filesRemoved));
+      }
+    });
+
+    // Add wacting files, see https://stackoverflow.com/a/35721696/5906199.
+    compiler.hooks.afterCompile.tap(PLUGIN, compilation => {
+      this.moduleMap.filesToWatch().forEach(file => {
+        compilation.fileDependencies.add(file);
+      });
+      this.moduleMap.directoriesToWatch().forEach(dir => {
+        compilation.contextDependencies.add(dir);
+      });
     });
 
     compiler.hooks.compilation.tap(PLUGIN, (compilation, params) => {

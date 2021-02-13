@@ -14,7 +14,7 @@
   "scripts": {
     "test": "npm run test:lint && npm run test:unit && npm run test:coverage",
     "test:lint": "eslint",
-    "test:unit": "mocha test",
+    "test:unit": "mocha test --recursive",
     "test:coverage": "nyc mocha"
   },
   "dependencies": {
@@ -24,7 +24,7 @@
     "lodash.defaultsdeep": "^4.6.1",
     "path": "^0.12.7",
     "schema-utils": "^2.6.5",
-    "slim-pig": "^1.0.3",
+    "slim-pig": "1.0.8",
     "webpack": "^4.42.1"
   },
   "devDependencies": {
