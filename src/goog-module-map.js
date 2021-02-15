@@ -63,7 +63,8 @@ class GoogModuleData {
     // The parser's program hooks always trigged finally after all expressions
     // parsed, so if you want to find out the current node's ancestor and more,
     // you have to build an extra AST ahead the webpack parser start.
-    this.ast = acorn.buildAcornTree(this.path, {
+    const source = fs.readFileSync(this.path, 'utf-8');
+    this.ast = acorn.buildAcornTree(source, {
       ecmaVersion: 2017,
       sourceType: 'module',
       locations: true
@@ -167,12 +168,14 @@ class GoogModuleMap {
 
     this.scan();
 
-    // TODO: serparate out this code.
     // Analyze the Closure-library dependencies file `deps.js` and cache the 
     // namespace dependencies in Closure-library but don't analyze the module 
     // data until required.
     const googDepsPath = path.resolve(this.baseDir, 'deps.js');
-    this.loadDepsFile(googDepsPath, ModuleTag.LIB);
+    if (!fs.existsSync(googDepsPath))
+      throw new Error(`Missing the Closure-library dependencies file \"${googDepsPath}\"!!`);
+    const source = fs.readFileSync(googDepsPath, 'utf8')
+    this.loadDeps(source, ModuleTag.LIB);
   }
 
   /**
@@ -203,18 +206,12 @@ class GoogModuleMap {
   directoriesToWatch() { return this.files_.directoriesToWatch(); }
 
   /** 
-   * Load dependencies file.
-   * @param {string} depsPath File path to read.
-   * @param {string} tag The predefined or user defined module tag, see ModuleTag.
+   * Load dependencies from source.
+   * @param {string} source The dependencies file source.
+   * @param {string} tag The predefined or user defined module tag, see `ModuleTag`.
    */
-  loadDepsFile(depsPath, tag = ModuleTag.DEFAULT) {
-    if (!fs.existsSync(depsPath)) {
-      throw new Error(
-        `Missing the dependencies file \"${depsPath}\"!!`
-      );
-    }
-
-    const depsAst = acorn.buildAcornTree(depsPath, {
+  loadDeps(source, tag = ModuleTag.DEFAULT) {
+    const depsAst = acorn.buildAcornTree(source, {
       ecmaVersion: 2017,
       sourceType: 'module',
       locations: true
@@ -253,10 +250,10 @@ class GoogModuleMap {
 
   /** 
    * Save dependencies with the specific tag to file.
-   * @param {string} depsPath File path to write.
    * @param {string} tag The predefined or user defined module tag, see ModuleTag.
+   * @return {string} The dependencies file source.
    */
-  SaveDepsFile(depsPath, tag = ModuleTag.USER_ALL) {
+  writeDeps(tag = ModuleTag.USER_ALL) {
     // TODO
   }
 

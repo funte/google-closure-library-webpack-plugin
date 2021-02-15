@@ -4,14 +4,13 @@ const acornLoose = require('acorn-loose');
 
 /** 
  * Build an acorn AST.
- * @param {string} modulePath File path to parse.
+ * @param {string} source The JavaScript file source.
  * @param {object} opt Parse options.
  *    See https://www.npmjs.com/package/acorn#interface.
  * @return {Node} Acorn AST.
  */
-const buildAcornTree = function (modulePath, opt) {
-  const moduleContents = fs.readFileSync(modulePath, 'utf8');
-  return acornLoose.parse(moduleContents, opt);
+const buildAcornTree = function (source, opt) {
+  return acornLoose.parse(source, opt);
 };
 
 /** 
