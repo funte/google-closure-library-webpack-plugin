@@ -4,7 +4,7 @@ const pig = require('slim-pig');
 const validateOptions = require('schema-utils');
 const schema = require('./schema');
 const defaultsDeep = require('lodash.defaultsdeep');
-const GoogModuleMap = require('./goog-module-map');
+const { GoogModuleMap } = require('./goog-module-map');
 const NullFactory = require('webpack/lib/NullFactory');
 const GoogRequireParserPlugin = require('./goog-require-parser-plugin');
 const GoogDependency = require('./dependencies/goog-dependency');
@@ -45,35 +45,41 @@ class GoogleClosureLibraryWebpackPlugin {
   apply(compiler) {
     // Watch the files change, see https://stackoverflow.com/a/55139759/5906199.
     compiler.hooks.watchRun.tap(PLUGIN, (compiler) => {
-      let changed = Object.keys(compiler.watchFileSystem.watcher.mtimes);
-      let dirChanged = new Set();
-      let filesChanged = new Set();
-      let filesRemoved = new  Set();
-      pig.fs.separateFilesDirs(changed,
-        file => {
-          if (this.moduleMap.files_.filter(file)) {
-            if (fs.existsSync(file)) {
-              filesChanged.add(file);
-            } else {
-              filesRemoved.add(file);
+      let changedFiles = [];
+      // If something removed or directories changed, rebuild the whole module map.
+      let rebuild = false;
+
+      for (const filedir of Object.keys(compiler.watchFileSystem.watcher.mtimes)) {
+        if (this.moduleMap.fileContext.has(filedir)) {
+          if (fs.existsSync(filedir)) {
+            const stat = fs.statSync(filedir);
+            if (stat.isFile()) {
+              console.log('file change: ', filedir);
+              // File changed, record it.
+              changedFiles.push(filedir);
+            } else if (stat.isDirectory()) {
+              console.log('dir change: ', filedir);
+              // Directory changed, nedd rebuild.
+              rebuild = true;
+              break;
             }
-          }
-        },
-        dir => {
-          // Has directory add or delete.
-          if (this.moduleMap.files_.filter(dir)) {
-            dirChanged.add(dir);
+          } else {
+            console.log('removed: ', filedir);
+            // Directory or file removed, need rebuild.
+            rebuild = true;
+            break;
           }
         }
-      );
-      if (dirChanged.size) {
+      }
+      if (rebuild) {
+        console.log('do rebuild');
         this.moduleMap.scan();
-      }
-      if (filesChanged.size) {
-        this.moduleMap.updateModules(Array.from(filesChanged));
-      }
-      if (filesRemoved.size) {
-        this.moduleMap.deleteModules(Array.from(filesRemoved));
+      } else {
+        console.log('do update');
+        // Just update some modules.
+        changedFiles.forEach(file => {
+          this.moduleMap.updateModule(file);
+        });
       }
     });
 

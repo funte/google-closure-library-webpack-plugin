@@ -3,22 +3,38 @@ const pig = require('slim-pig');
 
 class FileCache {
   constructor(files, dirs) {
-    this.files_ = files ? files : new Set();
-    this.dirs_ = dirs ? dirs : new Set();
+    this._files = files ? files : new Set();
+    this._dirs = dirs ? dirs : new Set();
   }
 
+  /* Add a file or directory, this method may add unnecessary directory or file,
+  using `shrink` remove it. */
+  addFile(file) { this._files.add(file); }
+  addDir(dir) { this._dirs.add(dir); }
+
+  /* Delete a file or directory. */
+  delFile(file) { this._files.delete(file); }
+  delDir(dir) { this._dirs.delete(dir); }
+
+  files() { return Array.from(this._files); }
+  dirs() { return Array.from(this._dirs); }
+
   /**
-   * Check if hit a file or directory.
+   * Check if has a directory or file.
    * @param {string} fileDir Directory or file path.
+   * @param {string} fileDir False if the directory or file not cache.
    */
-  hit(fileDir) {
+  has(fileDir) {
+    /* No need to distinguish directory or file path here */
     fileDir = path.resolve(fileDir);
 
-    /* No need to distinguish directory or file path here */
-    if (this.files_.has(fileDir)) {
+    if (this._files.has(fileDir)) {
       return true;
     }
-    for (let dir of this.dirs_) {
+    if (this._dirs.has(fileDir)) {
+      return true;
+    }
+    for (let dir of this._dirs) {
       if (pig.fs.isSubDirectory(fileDir, dir)) {
         return true;
       }
@@ -26,105 +42,146 @@ class FileCache {
 
     return false;
   }
+
+  /* Remove unnecessary directories or files.  */
+  shrink() {
+    // Shrink directories.
+    this.dirs().forEach(child => {
+      this.dirs().forEach(parent => {
+        if (child !== parent) {
+          if (pig.fs.isSubDirectory(child, parent)) {
+            this._dirs.delete(child);
+          }
+        }
+      });
+    });
+
+    // Shrink files.
+    this.files().forEach(child => {
+      this.dirs().forEach(parent => {
+        if (pig.fs.isSubDirectory(child, parent)) {
+          this._files.delete(child);
+        }
+      });
+    });
+  }
 }
 
 class FileContext {
   /**
-   * @param {Array.<string>} filesDirs Directories and files path.
-   * @param {Array.<string>} excludes Exclude directories and files path.
+   * @param {Array<string>} filesDirs Directories and files path.
+   * @param {Array<string>} excludes Exclude directories and files path.
    */
   constructor(filesDirs, excludes) {
     // Cache for directories and files path to include.
-    this.includes_ = new FileCache();
+    this.includes = new FileCache();
     // Cache for directories and files path to exclude.
-    this.excludes_ = new FileCache();
+    this.excludes = new FileCache();
+    // Cache found files.
+    this._files = new Set();
 
-    // Cache directories and files path.
-    pig.fs.separateFilesDirs(filesDirs,
-      file => { this.includes_.files_.add(file); },
-      dir => { this.includes_.dirs_.add(dir); }
-    );
-    pig.fs.separateFilesDirs(excludes,
-      file => { this.excludes_.files_.add(file); },
-      dir => { this.excludes_.dirs_.add(dir); }
-    );
-    // Merge include cache conflict.
-    for (let file of this.includes_.files_.values()) {
-      if (this.excludes_.hit(file)) {
-        this.includes_.files_.delete(file);
-      }
-    }
-    for (let dir of this.includes_.dirs_.values()) {
-      if (this.excludes_.hit(dir)) {
-        this.excludes_.dirs_.delete(dir);
-      }
-    }
+    this.exclude(excludes);
+    this.include(filesDirs);
   }
 
   /**
-   * Register the update callback function.
-   * @param {Function} callback Called when `this.update`.
+   * Just return the files in original include cache.
+   * @return {Array<string>} List of files to watch.
    */
-  registerUpdateCallback(callback) {
-    this.updateCallback_ = callback;
-  }
+  filesToWatch() { return this.includes.files(); }
 
   /**
-   * @return {Array.<string>} List of files to watch.
+   * Just return the directories in original include cache.
+   * @return {Array<string>} List of directories to watch.
    */
-  filesToWatch() {
-    // Just return the files in original include cache.
-    return Array.from(this.includes_.files_);
-  }
-
-  /**
-   * @return {Array.<string>} List of directories to watch.
-   */
-  directoriesToWatch() {
-    // Just return the directories in original include cache.
-    return Array.from(this.includes_.dirs_);
-  }
+  directoriesToWatch() { return this.includes.dirs(); }
 
   /**
    * Scan files.
-   * @return {Array.<string>} List of files found.
+   * @param {Boolean} force Scan files anyway if true.
+   * @return {Array<string>} List of files found.
    */
-  scan() {
-    let files = new Set([...this.includes_.files_]);
-    this.includes_.dirs_.forEach(includeDir => {
-      pig.fs.walkSyncEx(includeDir,
-        file => {
-          if (!this.excludes_.hit(file)) {
-            files.add(file);
+  scan(force = false) {
+    if (force || Array.from(this._files).length === 0) {
+      this._files = new Set([...this.includes._files]);
+      this.includes.dirs().forEach(includeDir => {
+        pig.fs.walkSyncEx(includeDir,
+          file => {
+            if (!this.excludes.has(file)) {
+              this._files.add(file);
+            }
+          },
+          dir => {
+            // If current exclude directory, skip it.
+            if (this.excludes.has(dir)) {
+              return { skip: true };
+            }
           }
-        },
-        dir => {
-          // If current exclude directory, skip it.
-          if (this.excludes_.hit(dir)) {
-            return { skip: true };
-          }
-        }
-      );
-    });
+        );
+      });
+    }
 
-    return Array.from(files);
+    return Array.from(this._files);
   }
 
   /**
-   * Check if the directory or file include.
+   * Check if the directory or file include and not exclude.
    * @param {string} fileDir Directory or file path.
-   * @return {Boolean} False if not include.
+   * @return {Boolean} False if not include or exclude.
    */
-  filter(fileDir) {
+  has(fileDir) {
     fileDir = path.resolve(fileDir);
 
     // Must lookup the exclude cache first.
-    if (this.excludes_.hit(fileDir)) { return false; }
+    if (this.excludes.has(fileDir)) { return false; }
 
-    if (this.includes_.hit(fileDir)) { return true; }
+    if (this.includes.has(fileDir)) { return true; }
 
     return false;
   }
+
+  /**
+   * Update include files and directories.
+   * @param {Array{string}} filesDirs Directories and files path.
+   */
+  include(filesDirs) {
+    this._files.clear();
+
+    pig.fs.separateFilesDirs(filesDirs,
+      file => { this.includes.addFile(file); },
+      dir => { this.includes.addDir(dir); }
+    );
+    this.includes.shrink();
+    // Resolve conflicts in cache.
+    this._merge();
+  }
+
+  /**
+   * Update exclude files and directories.
+   * @param {Array{string}} filesDirs Directories and files path.
+   */
+  exclude(filesDirs) {
+    this._files.clear();
+
+    pig.fs.separateFilesDirs(filesDirs,
+      file => { this.excludes.addFile(file); },
+      dir => { this.excludes.addDir(dir); }
+    );
+    this.excludes.shrink();
+  }
+
+  /* Resolve conflicts by applying exlucde cache to include cache, keep the include 
+  cache minimum, remove unnecessary directories and files from include cache.*/
+  _merge() {
+    this.includes.files().forEach(file => {
+      if (this.excludes.has(file))
+        this.includes.delFile(file);
+    });
+    this.includes.dirs().forEach(dir => {
+      if (this.excludes.has(dir))
+        this.includes.delDir(dir);
+    })
+  }
 }
 
-module.exports = FileContext;
+module.exports = { FileCache, FileContext };

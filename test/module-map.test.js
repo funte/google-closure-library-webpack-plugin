@@ -1,7 +1,7 @@
 const { assert, expect } = require('chai');
 const path = require('path');
 const GoogleClosureLibraryWebpackPlugin = require('../src/index');
-const GoogModuleMap = require('../src/goog-module-map');
+const { ModuleTag, GoogModuleData, GoogModuleMap } = require('../src/goog-module-map');
 
 function helper_makeModuleMap(options) {
   const plugin = new GoogleClosureLibraryWebpackPlugin(options);
@@ -30,25 +30,42 @@ function helper_teardown() {
   delete googRequireModuleMap;
 }
 
+describe('Test module data', function () {
+  it('Test tag', function () {
+    let moduleData = new GoogModuleData('');
+
+    moduleData.tag = ModuleTag.LIB;
+    assert.isOk(moduleData.isTag(ModuleTag.LIB));
+    assert.isNotOk(moduleData.isTag(ModuleTag.DEFAULT));
+    assert.isNotOk(moduleData.isTag(ModuleTag.USER_ALL));
+
+    moduleData.tag = ModuleTag.DEFAULT;
+    assert.isNotOk(moduleData.isTag(ModuleTag.LIB));
+    assert.isOk(moduleData.isTag(ModuleTag.DEFAULT));
+    assert.isOk(moduleData.isTag(ModuleTag.USER_ALL));
+
+    const userDefinedTag = 'userDefinedTag';
+    moduleData.tag = userDefinedTag;
+    assert.isNotOk(moduleData.isTag(ModuleTag.LIB));
+    assert.isNotOk(moduleData.isTag(ModuleTag.DEFAULT));
+    assert.isOk(moduleData.isTag(ModuleTag.USER_ALL));
+    assert.isOk(moduleData.isTag(userDefinedTag));
+  });
+});
+
 describe('Test module map', function () {
   helper_setup();
 
   it('Test construct module map', function () {
-    assert.notEqual(googDeclareModuleMap.namespace2Path.size, 0);
-    assert.notEqual(googDeclareModuleMap.path2Module.size, 0);
-    assert.notEqual(googModuleModuleMap.namespace2Path.size, 0);
-    assert.notEqual(googModuleModuleMap.path2Module.size, 0);
-    assert.notEqual(googRequireModuleMap.namespace2Path.size, 0);
-    assert.notEqual(googRequireModuleMap.path2Module.size, 0);
+    assert.notEqual(googDeclareModuleMap._namespace2Path.size, 0);
+    assert.notEqual(googDeclareModuleMap._path2Module.size, 0);
+    assert.notEqual(googModuleModuleMap._namespace2Path.size, 0);
+    assert.notEqual(googModuleModuleMap._path2Module.size, 0);
+    assert.notEqual(googRequireModuleMap._namespace2Path.size, 0);
+    assert.notEqual(googRequireModuleMap._path2Module.size, 0);
   });
 
-  helper_teardown();
-});
-
-describe('Test module data', function () {
-  helper_setup();
-
-  it('Test module data', function () {
+  it('Test require module', function () {
     var moduleData = null;
 
     moduleData = googDeclareModuleMap.requireModuleByPath(

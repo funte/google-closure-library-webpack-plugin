@@ -2,7 +2,8 @@ const path = require('path');
 const fs = require('fs');
 const walk = require('acorn-walk');
 const acorn = require('./util/acorn-parser');
-const FileContext = require('./util/file-context');
+const { FileContext } = require('./util/file-context');
+const pig = require('slim-pig');
 
 /**
  * Pridefined module tag.
@@ -10,9 +11,9 @@ const FileContext = require('./util/file-context');
 const ModuleTag = {
   // Tag for modules in Closure-library.
   LIB: 'lib',
-  // Default use tag.
+  // Default user tag.
   DEFAULT: 'default',
-  // All user provided modules. 
+  // All user provided modules include tags with `ModuleTag.DEFAULT` and user defined. 
   USER_ALL: 'user_all'
 };
 
@@ -20,6 +21,7 @@ class GoogModuleData {
   /** 
    * Constrct a module data.
    * @param {string} tag The predefined or user defined module tag, see ModuleTag.
+   *  Possible values `ModuleTag.LIB`, `ModuleTag.DEFAULT` or user defined.
    * @param {string} modulePath The module path.
    */
   constructor(modulePath, tag = ModuleTag.DEFAULT) {
@@ -33,6 +35,9 @@ class GoogModuleData {
 
     // Reserved for denpendencies file read/write.
     this.tag = tag;
+    if (this.tag === ModuleTag.USER_ALL) {
+      throw new Error(`Invalid tag \"${this.tag}\" when create module \"${this.path}\"`);
+    }
 
     // Acorn AST.
     this.ast = null;
@@ -151,6 +156,19 @@ class GoogModuleData {
     this.unload();
     this.load();
   }
+
+  /**
+   * Test if this module match the tag.
+   * @param {ModuleTag} tag To test.
+   * @return {Boolean} False if not match.
+   */
+  isTag(tag) {
+    if (ModuleTag.USER_ALL === tag) {
+      return this.tag !== ModuleTag.LIB;
+    } else {
+      return this.tag === tag;
+    }
+  }
 }
 
 class GoogModuleMap {
@@ -161,10 +179,11 @@ class GoogModuleMap {
     this.basePath = path.resolve(options.goog);
     this.baseDir = path.dirname(this.basePath);
 
-    this.namespace2Path = new Map();
-    this.path2Module = new Map();
+    this._namespace2Path = new Map();
+    this._path2Module = new Map();
 
-    this.files_ = new FileContext(options.sources, options.excludes);
+    // File context.
+    this.fileContext = new FileContext(options.sources, options.excludes);
 
     this.scan();
 
@@ -179,36 +198,38 @@ class GoogModuleMap {
   }
 
   /**
-   * Scan dependencies(no validation).
+   * Scan dependencies(no validation) from file context and load the modules found.
+   * This method will rebuild the whole module map.
    */
   scan() {
-    this.namespace2Path.clear();
-    this.path2Module.clear();
+    this._namespace2Path.clear();
+    this._path2Module.clear();
 
-    // Analyze source files.
-    this.files_.scan().forEach(file => {
-      // Using defualt module tag.
+    // Scan modules and load.
+    this.fileContext.scan().forEach(file => {
+      // Using the defualt module tag.
       // TODO: Using user defined module tag.
-      this.load_(file, ModuleTag.DEFAULT);
+      this._load(file, ModuleTag.DEFAULT);
     });
   }
 
   /**
    * Get all files to watch from cache.
-   * @return {Array.<string>} List of files to watch.
+   * @return {Array<string>} List of files to watch.
    */
-  filesToWatch() { return this.files_.filesToWatch(); }
+  filesToWatch() { return this.fileContext.filesToWatch(); }
 
   /**
    * Get all directories to watch from cache.
-   * @return {Array.<string>} List of directories to watch.
+   * @return {Array<string>} List of directories to watch.
    */
-  directoriesToWatch() { return this.files_.directoriesToWatch(); }
+  directoriesToWatch() { return this.fileContext.directoriesToWatch(); }
 
   /** 
    * Load dependencies from source.
    * @param {string} source The dependencies file source.
    * @param {string} tag The predefined or user defined module tag, see `ModuleTag`.
+   *  Possible values `ModuleTag.LIB`, `ModuleTag.DEFAULT` or user defined.
    */
   loadDeps(source, tag = ModuleTag.DEFAULT) {
     const depsAst = acorn.buildAcornTree(source, {
@@ -230,10 +251,14 @@ class GoogModuleMap {
         ) {
           const modulePath = path.resolve(this.baseDir, node.arguments[0].value);
           if (fs.existsSync(modulePath)) {
+            // Add user module path to file context.
+            if (tag !== ModuleTag.LIB)
+              this.fileContext.include(modulePath);
+
             var moduleData = new GoogModuleData(modulePath, tag);
             // Analyze provided namespaces.
             node.arguments[1].elements.forEach(arg => {
-              this.namespace2Path.set(arg.value, modulePath);
+              this._namespace2Path.set(arg.value, modulePath);
               moduleData.provides.add(arg.value);
             });
             // Analyze required namespaces.
@@ -241,7 +266,7 @@ class GoogModuleMap {
               moduleData.requires.add(arg.value);
             });
 
-            this.path2Module.set(modulePath, moduleData);
+            this._path2Module.set(modulePath, moduleData);
           }
         }
       }
@@ -249,18 +274,45 @@ class GoogModuleMap {
   }
 
   /** 
-   * Save dependencies with the specific tag to file.
+   * Save dependencies with the specific tag.
+   * @param {string} from The dependencies file path to save, using to generate 
+   *   relative path for `goog.addDependency`.
    * @param {string} tag The predefined or user defined module tag, see ModuleTag.
+   *   Possible values `ModuleTag.LIB`, `ModuleTag.DEFAULT`, `ModuleTag.USER_ALL` or user defined.
    * @return {string} The dependencies file source.
    */
-  writeDeps(tag = ModuleTag.USER_ALL) {
-    // TODO
+  writeDeps(from, tag = ModuleTag.USER_ALL) {
+    let source = ``;
+
+    let modulesPath = new Set();
+    for (let moduleData of this._path2Module.values()) {
+      if (moduleData.isTag(tag)) {
+        modulesPath.add(moduleData.path);
+
+        const relative = pig.str.unixlike(path.relative(from, moduleData.path));
+        const provides = Array.from(moduleData.provides).map(
+          namespace => `\"${namespace}\"`
+        );
+        const requires = Array.from(moduleData.requires).map(
+          namespace => `\"${namespace}\"`
+        );
+        let opt = [];
+        if (moduleData.isGoogModule) {
+          opt.push(`\"module\": \"goog\"`);
+        }
+        const line = `goog.addDependency(\"${relative}\", [${provides.join(', ')}], [${requires.join(', ')}], {${opt.join(', ')}});\n`;
+        source += line;
+      }
+    }
+
+    return source;
   }
 
   /** 
-   * Get module data from path, if the module not in map, load it.
+   * Get module data from path, if the module not in map, load it with the tag.
    * @param {string} modulePath The module path.
    * @param {string} tag The predefined or user defined module tag, see ModuleTag.
+   *   Possible values `ModuleTag.LIB`, `ModuleTag.DEFAULT` or user defined.
    * @return {GoogModuleData} Module data or null.
    */
   requireModuleByPath(modulePath, tag = ModuleTag.DEFAULT) {
@@ -268,11 +320,11 @@ class GoogModuleMap {
 
     var moduleData = null;
 
-    if (!this.path2Module.has(modulePath)) {
+    if (!this.has(modulePath)) {
       // If not in map, load it.
-      moduleData = this.load_(modulePath, tag);
+      moduleData = this._load(modulePath, tag);
     } else {
-      moduleData = this.path2Module.get(modulePath);
+      moduleData = this._path2Module.get(modulePath);
     }
 
     return moduleData;
@@ -284,7 +336,7 @@ class GoogModuleMap {
    * @return {GoogModuleData} Module data or null.
    */
   requireModuleByName(namespace) {
-    const modulePath = this.namespace2Path.get(namespace);
+    const modulePath = this._namespace2Path.get(namespace);
     if (!Boolean(modulePath)) {
       throw new Error(`Unknow namespace ${namespace}!!`);
     }
@@ -293,70 +345,78 @@ class GoogModuleMap {
   }
 
   /**
-   * Update(reload) modules, if not in map, load it.
-   * @param {Array.<string>} modulesPath List of modules path to update. 
-   * @param {string} tag The predefined or user defined module tag, see ModuleTag.
+   * Check if in module map.
+   * @return {Boolean} False if not in module map.
    */
-  updateModules(modulesPath, tag = ModuleTag.DEFAULT) {
-    modulesPath = modulesPath || [];
-    modulesPath = Array.isArray(modulesPath) ? modulesPath : [modulesPath];
-    modulesPath.forEach(modulePath => {
-      modulePath = path.resolve(modulePath);
-      if (!this.path2Module.has(modulePath)) {
+  has(modulePath) { return this._path2Module.has(modulePath); }
+
+  /**
+   * Update(reload) module in map.
+   * This method will check if file context has cached the module path, if cached
+   * and not in module map, load it, else skip it. 
+   * @param {string} modulePath Module of path to update. 
+   * @param {string} tag The predefined or user defined module tag, see ModuleTag.
+   *   Possible values `ModuleTag.LIB`, `ModuleTag.DEFAULT` or user defined.
+   */
+  updateModule(modulePath, tag = ModuleTag.DEFAULT) {
+    modulePath = path.resolve(modulePath);
+    if (!this.has(modulePath)) {
+      if (this.fileContext.has(modulePath)) {
         // If not in map, load it.
-        this.load_(modulePath, tag);
-      } else {
-        this.reload_(modulePath);
+        this._load(modulePath, tag);
       }
-    });
+    } else {
+      this._reload(modulePath, tag);
+    }
   }
 
   /**
-   * Delete modules.
+   * Delete module from map.
+   * @param {string} modulePath Module of path to delete.
    */
-  deleteModules(modulesPath) {
-    modulesPath = modulesPath || [];
-    modulesPath = Array.isArray(modulesPath) ? modulesPath : [modulesPath];
-    modulesPath.forEach(modulePath => {
-      if (this.path2Module.has(modulePath)) {
-        let moduleData = this.path2Module.get(modulePath);
-        if (moduleData && moduleData.loaded) {
-          moduleData.provides.forEach(namespace => {
-            this.namespace2Path.delete(namespace);
-          });
-        }
-        this.path2Module.delete(modulePath);
+  deleteModule(modulePath) {
+    if (this.has(modulePath)) {
+      let moduleData = this._path2Module.get(modulePath);
+      if (moduleData && moduleData.loaded) {
+        moduleData.provides.forEach(namespace => {
+          this._namespace2Path.delete(namespace);
+        });
       }
-    });
+      this._path2Module.delete(modulePath);
+    }
   }
 
-  reload_(modulePath, tag) {
-    if (!this.path2Module.has(modulePath)) {
+  _reload(modulePath, tag) {
+    if (!this.has(modulePath)) {
       // If not in map, load it.
-      this.load_(modulePath, tag);
+      this._load(modulePath, tag);
     } else {
-      var moduleData = this.path2Module.get(modulePath);
+      var moduleData = this._path2Module.get(modulePath);
       moduleData.provides.forEach(namespace => {
-        this.namespace2Path.delete(namespace);
+        this._namespace2Path.delete(namespace);
       });
       moduleData.reload();
       moduleData.provides.forEach(namespace => {
-        this.namespace2Path.set(namespace, modulePath);
+        this._namespace2Path.set(namespace, modulePath);
       });
     }
   }
 
-  load_(modulePath, tag) {
+  _load(modulePath, tag) {
     var moduleData = new GoogModuleData(modulePath, tag);
-    this.path2Module.set(modulePath, moduleData);
+    this._path2Module.set(modulePath, moduleData);
 
     moduleData.load();
     moduleData.provides.forEach(namespace => {
-      this.namespace2Path.set(namespace, modulePath);
+      this._namespace2Path.set(namespace, modulePath);
     });
 
     return moduleData;
   }
 }
 
-module.exports = GoogModuleMap;
+module.exports = {
+  ModuleTag,
+  GoogModuleData,
+  GoogModuleMap
+};

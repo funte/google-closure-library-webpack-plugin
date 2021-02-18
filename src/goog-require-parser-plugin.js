@@ -29,7 +29,7 @@ class GoogRequireParserPlugin {
         const currentModuleData = this.moduleMap.requireModuleByPath(parser.state.current.resource);
         const requiredModuleData = this.moduleMap.requireModuleByName(expr.arguments[0].value);
         this.addGoogDependency(parser, requiredModuleData.path, false, 
-          currentModuleData.isGoogModule === false ? {
+          currentModuleData._isGoogModule === false ? {
           start: expr.start,
           end: expr.end
         }: null);
