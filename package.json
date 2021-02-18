@@ -1,6 +1,6 @@
 {
   "name": "google-closure-library-webpack-plugin",
-  "version": "1.1.13",
+  "version": "1.1.14",
   "description": "Webpack plugin for google-closure-library, separate from closure-webpack-plugin",
   "main": "src/index.js",
   "keywords": [],
