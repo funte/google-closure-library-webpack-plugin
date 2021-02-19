@@ -54,17 +54,14 @@ class GoogleClosureLibraryWebpackPlugin {
           if (fs.existsSync(filedir)) {
             const stat = fs.statSync(filedir);
             if (stat.isFile()) {
-              console.log('file change: ', filedir);
               // File changed, record it.
               changedFiles.push(filedir);
             } else if (stat.isDirectory()) {
-              console.log('dir change: ', filedir);
               // Directory changed, nedd rebuild.
               rebuild = true;
               break;
             }
           } else {
-            console.log('removed: ', filedir);
             // Directory or file removed, need rebuild.
             rebuild = true;
             break;
@@ -72,10 +69,8 @@ class GoogleClosureLibraryWebpackPlugin {
         }
       }
       if (rebuild) {
-        console.log('do rebuild');
         this.moduleMap.scan();
       } else {
-        console.log('do update');
         // Just update some modules.
         changedFiles.forEach(file => {
           this.moduleMap.updateModule(file);

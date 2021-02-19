@@ -232,6 +232,7 @@ class GoogModuleMap {
    *  Possible values `ModuleTag.LIB`, `ModuleTag.DEFAULT` or user defined.
    */
   loadDeps(source, tag = ModuleTag.DEFAULT) {
+    console.log('load source: ', source.slice(0, 20));
     const depsAst = acorn.buildAcornTree(source, {
       ecmaVersion: 2017,
       sourceType: 'module',
@@ -355,7 +356,7 @@ class GoogModuleMap {
    * This method will check if file context has cached the module path, if cached
    * and not in module map, load it, else skip it. 
    * @param {string} modulePath Module of path to update. 
-   * @param {string} tag The predefined or user defined module tag, see ModuleTag.
+   * @param {string} tag The predefined or user defined module tag, see `ModuleTag`.
    *   Possible values `ModuleTag.LIB`, `ModuleTag.DEFAULT` or user defined.
    */
   updateModule(modulePath, tag = ModuleTag.DEFAULT) {
@@ -384,6 +385,21 @@ class GoogModuleMap {
       }
       this._path2Module.delete(modulePath);
     }
+  }
+
+  /**
+   * Get modules with tag.
+   * @param {ModuleTag} tag The predefined or user defined module tag, see `ModuleTag`.
+   *   Accept all `ModuleTag` values.
+   * @return {Array<ModuleData>} List of modules with the tag.
+   */
+  getModules(tag = ModuleTag.DEFAULT) {
+    var moduleDataFound = [];
+    this._path2Module.forEach(moduleData => {
+      if (moduleData.hit(tag))
+      moduleDataFound.add(moduleData);
+    });
+    return moduleDataFound;
   }
 
   _reload(modulePath, tag) {
