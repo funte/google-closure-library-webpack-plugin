@@ -119,5 +119,41 @@ describe('Test module map', function () {
     assert.equal(googRequireModuleMap.requireModuleByName('Foo'), moduleData);
   });
 
+  it('Test load deps file', function () {
+    // TODO: Test load deps file
+  });
+
+  it('Test write deps file', function () {
+    // TODO: Test write deps file
+  });
+
+  it('Test scan modules', function () {
+    // TODO: Test scan modules
+  });
+
+  it('Test \"has\"', function () {
+    // TODO: Test \"has\"
+  })
+
+  it('Test update modules', function () {
+    // TODO: Test update modules
+  });
+
+  it('Test delete modules', function () {
+    // TODO: Test delete modules
+  });
+
+  it('Test find modules', function () {
+    // TODO: Test find modules
+  });
+
+  it('Test reload module', function () {
+    // TODO: Test reload module
+  });
+
+  it('Test load module', function () {
+    // TODO: Test load module
+  });
+
   helper_teardown();
 });
