@@ -1,26 +1,55 @@
 # google-closure-library-webpack-plugin
-Webpack plugin for google-closure-library, separate from [closure-webpack-plugin](https://www.npmjs.com/package/closure-webpack-plugin).  
-Make webpack recognize `goog.require, goog.provide, goog.module, goog.declareModuleId`.
-This plugin just transform the closure file to compatible webpack bundle, no need to install Google-Closure-Compiler.  
-Currently support `google-closure-library@20200830.0.0, webpack@4.42.0`.
+Webpack5 plugin for google-closure-library, inspired from [closure-webpack-plugin](https://www.npmjs.com/package/closure-webpack-plugin).  
+
+This plugin transpile the Closure module to ES and CommonJS module, no need to install [google-closure-compiler](https://github.com/google/closure-compiler).  
+
+Now support `google-closure-library@20200830.0.0`, `webpack@5.28.0`, Webpack watch mode and these APIS:  
+* `goog.require`  
+  Will be transpiled to ES or CommonJS import statement, depend on the [target](#target--optional-"esm"-or-"commonjs"-defaults-to-"esm") option.  
+* `goog.provide`(deprecated), `goog.module` and `goog.module.declareLegacyNamespace`  
+  Will be transpiled to ES or CommonJS export statement, depend on the [target](#target--optional-"esm"-or-"commonjs"-defaults-to-"esm") option.  
+  >[In addition, goog.provide() creates the object stubs for a namespace (for example, goog.provide("goog.foo.bar") will create the object goog.foo.bar if it does not already exist).](https://google.github.io/closure-library/api/goog.html#provide)
+  >
+  As above mentioned, `goog.provide` will expose a global accessible object in the `goog.global`, you can direct use it and its sub namespaces after `goog.require`, but the `goog.module` is completely opposite, its module structure more pure, flat and individual.  
+* `goog.declareModuleId` and `goog.module.declareNamespace`(deprecated)  
+  Associates an ES or CommonJS module with a Closure module ID so that is available via `goog.require`, see example [esm](./examples/esm/README.md).  
+* `goog.addDependency`  
+  `goog.addDependency` will be treat as directive and the goog debug loader not work anymore, the only usage of `goog.addDependency` see section [Speedup the Webpack building process with deps file](#💊speedup-the-webpack-building-process-with-deps-file);  
+* `goog.define`  
+  All `goog.define` expressions that not mentioned in the [defs](#defs--optional-array-type) option, will be replaced with its default value, see [defs](#defs--optional-array-type) option.  
+
+🎉🎉🎉This plugin is still maintained, welcom to create issue if you find bugs or has any expectant feature🎉🎉🎉  
 
 ## Install
 ```sh
 npm install google-closure-library-webpack-plugin --save-dev
 ```
+
 ## Examples
-- [goog-declare-example](examples/goog-declare-example/README.md)  
-Using `goog.declare` show how make cross reference between ES6 and goog module.  
-- [goog-module-example](examples/goog-module-example/README.md)  
-Import the goog module defined by `goog.module`.  
-- [goog-require-example](examples/goog-require-example/README.md)  
-Using traditional `goog.require`(without return) and `goog.provide`. If using `goog.provide` defines a top namespace `Foo`, this will create a global variable `Foo`. So, don't use `goog.provide` define too much top namespace.
+[Here](./examples/README.md) are many examples that can download, build and run it. 
 
 ## Options
-+ goog  
-  Path to Closure Library base.js file.Default is `node_modules/google-closure-library/closure/goog/base.js`.
-+ sources  
-  Directories and JS files path to scan dependencies.  
-  Case your project has namespaces 'A', 'B', 'C' and 'A' requires 'B' but leave namespace 'C' alone. When module 'A' as the entry, after building work, webpack bundle will just cover 'A' and 'B', the namespace 'C' dropped.  
-+ excludes  
-  Exclude directories and JS files path.  
+### **base** : *optional string type, defaults to `node_modules/google-closure-library/closure/goog/base.js`*
+  Path to Closure library `base.js` file, must be absolute or relative from the Webpack [context](https://webpack.js.org/configuration/entry-context/#context).  
+### **sources** : *required string or array type*
+  List of absolute patterns, or relative from the Webpack [context](https://webpack.js.org/configuration/entry-context/#context). You can use the negative patterns(start with `!`) ignore files or directories.  
+  Supported glob features see [minimatch#features](https://github.com/isaacs/minimatch#features).  
+### **target** : *optional "esm" or "commonjs", defaults to "esm"*
+  Closure module transform target, "esm" or "commonjs", defaults to "esm".  
+### **defs** : *optional array type*
+  List of string and value to override the `goog.define` expression, e.g. source `const MSG = goog.define("msg", "Hello World!!");` will be converted to `const MSG = "哈喽啊 树哥!!";` with defs option `defs: [["msg", "哈喽啊 树哥!!"]]`.  
+  If the name part is omitted, its value will be true, e.g. source `const FLAG = goog.define("flag", false);` will be converted to `const FLAG = true;` with defs options `defs: [["flag"]]`.  
+### **debug.logTransformed** : *optional boolean type, defaults to false*
+  Enable log transformed Closure module to build directory, defaults to false.  
+
+## Something important
+### 💊Speedup the Webpack building process with deps file
+  Everytime when start the building process by the [Webpack build command](https://webpack.js.org/api/cli/#build), this plugin will search and parse all files found in the `sources` options. Obviously, it's very expensive and unnecessary, but if you specific a deps file like the `deps.js` in Closure library, this plugin will make a quick through and skip the parsing work until its requied by the `goog.require` statement.  
+  How speedup building process with deps file, see example [deps](./examples/deps/README.md).  
+### 💊How test your code, is the `goog.testing` still work?
+  No, but you can still use it with `goog.addDependency` load and execute JsUnit tests in an unbundled, uncompiled browser environment, see example [test](./examples/test/README.md).  
+  Also you can directly test the Webpack bundle file with `mocha` and other tools.  
+### 💊Influenced symbols in compiled base.js file
+  + `COMPILED` force to `true`;  
+  + `goog.DEBUG` force to `false`;  
+  + Replace `goog.global` with [options.output.globalObject](https://webpack.js.org/configuration/output/#outputglobalobject);  

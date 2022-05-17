@@ -1,5 +1,10 @@
 .vscode
-node_modules
-package-lock.json
-.nyc_output
+
+.eslintignore
+.eslintrc
 .npmrc
+package-lock.json
+yarn.lock
+node_modules
+
+dist

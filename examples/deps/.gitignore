@@ -1,0 +1,9 @@
+.vscode
+
+.npmrc
+yarn.lock
+package-lock.json
+node_modules
+
+build
+src/deps.js

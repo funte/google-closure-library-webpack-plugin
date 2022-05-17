@@ -1,23 +1,44 @@
+'use strict';
+
 module.exports = {
   type: 'object',
   properties: {
-    goog: {
-      description: "Path to Closure Library base.js file",
-      type: "string"
-    },
+    base: { type: 'string' },
     sources: {
-      description: 'Directories and JS files path to scan dependencies.',
-      type: 'array',
-      items: { type: 'string' },
+      anyOf: [
+        { type: 'string' },
+        { type: 'array', items: { type: 'string' } }
+      ]
     },
-    excludes: {
-      description: 'Exclude directories and JS files path.',
+    target: {
+      enum: ['esm', 'commonjs']
+    },
+    defs: {
       type: 'array',
-      items: { type: 'string' },
-    }
-    // TODO: Add compile flag options?
-    // If compile flag set, this plugin will going to:
-    //  1. Overwrite the COMPILED to true.
-    //  2. Strip all goog.require, goog.provide and  related module functions.
-  }
+      items: {
+        type: 'array',
+        prefixItems: [{ type: "string" }],
+        minItems: 1,
+        maxItems: 2,
+        items: {
+          anyOf: [
+            { type: 'string' },
+            { type: 'boolean' },
+            { type: 'number' },
+            { instanceof: 'RegExp' },
+            { instanceof: 'Function' }
+          ]
+        }
+      }
+    },
+    debug: {
+      type: 'object',
+      properties: {
+        logTransformed: { type: 'boolean' },
+      },
+      additionalProperties: false
+    },
+  },
+  required: ['sources'],
+  additionalProperties: false
 };
