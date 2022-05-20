@@ -22,10 +22,6 @@
     "esModuleInterop": true
   },
   "include": [
-    "declarations.d.ts",
     "src/**/*.js"
-  ],
-  "exclude": [
-    "node_modules"
   ]
 }

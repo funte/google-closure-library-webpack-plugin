@@ -107,6 +107,7 @@ const transform = ({ content, map, module, tree, env, WPModule, WPCompilation })
     tree.reloadModule(module.request, content);
   }
 
+  /** @type {any} */
   let source = undefined;
   if (WPModule && WPCompilation) {
     source = WPModule.createSource(
@@ -118,7 +119,7 @@ const transform = ({ content, map, module, tree, env, WPModule, WPCompilation })
   } else {
     if (map) {
       source = new SourceMapSource(
-        content,
+        asString(content),
         contextify(env.context, module.request, undefined),
         contextifySourceMap(env.context, map, undefined)
       );

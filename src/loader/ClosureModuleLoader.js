@@ -1,5 +1,6 @@
 'use strict';
 
+const asString = require('../utils/asString');
 const transform = require('../transformation/ClosureModuleTransform');
 
 /** @typedef {import('../types').ClosureTree} ClosureTree */
@@ -42,7 +43,8 @@ const loader = function (content, map, meta) {
       if (!fs.existsSync(output)) {
         fs.mkdirpSync(output);
       }
-      fs.writeFileSync(path.resolve(output, `transformed_${path.basename(this.resource)}`), source.source());
+      // @ts-ignore
+      fs.writeFileSync(path.resolve(output, `transformed_${path.basename(this.resource)}`), asString(source.source()));
     }
   }
 

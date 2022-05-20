@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@types/estree": "^0.0.46",
+    "@types/webpack-sources": "^3.2.0",
     "fs-extra": "^9.1.0",
     "minimatch": "^3.0.4",
     "schema-utils": "^3.0.0",
