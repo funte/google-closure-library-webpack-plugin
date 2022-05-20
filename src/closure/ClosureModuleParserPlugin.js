@@ -5,6 +5,7 @@ const pig = require('slim-pig');
 const ModuleType = require('./ModuleType');
 const PluginError = require('../errors/PluginError');
 const { tap, tapMulti } = require('../utils/tap');
+const { travelNamespaceToRoot } = require('../utils/travelNamespace');
 
 const BadRequire = require('../errors/BadRequire');
 const DeprecateWarning = require('../errors/DeprecateWarning');
@@ -889,21 +890,16 @@ class ClosureModuleParserPlugin {
       if (module.isbase) { return; }
 
       if (module.type === ModuleType.PROVIDE || module.legacy) {
-        const travelNamespaceToRoot = (namespace, callback) => {
-          const parts = namespace.split('.');
-          while (parts.length > 0) {
-            const op = callback(parts.join('.'));
-            if (op === false) { break; }
-            parts.pop();
-          }
-        }
-
         // Store all required and implicit namespaces.
+        /** @type {Set<string>} */
         const allrequired = new Set();
         for (const namespace of module.requires.keys()) {
-          travelNamespaceToRoot(namespace, current => allrequired.add(current));
+          travelNamespaceToRoot(namespace, (name, fullname) => {
+            allrequired.add(fullname);
+          });
         }
         // Store all implicit namespaces.
+        /** @type {Set<string>} */
         const allImplicities = new Set();
 
         Array.from(module.provides.values())
@@ -918,13 +914,13 @@ class ClosureModuleParserPlugin {
             if (info.implicities === undefined) {
               info.implicities = [];
             }
-            travelNamespaceToRoot(info.namespace, current => {
+            travelNamespaceToRoot(info.namespace, (name, fullname) => {
               // If current namespace has required, stop it.
-              if (allrequired.has(current)) { return false; }
+              if (allrequired.has(fullname)) { return false; }
               // If current namespace not contruct and not provided.
-              if (!allImplicities.has(current) && !module.provides.has(current)) {
-                info.implicities.push(current);
-                allImplicities.add(current);
+              if (!allImplicities.has(fullname) && !module.provides.has(fullname)) {
+                info.implicities.push(fullname);
+                allImplicities.add(fullname);
               }
             });
             info.implicities = info.implicities.reverse();

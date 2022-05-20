@@ -8,6 +8,7 @@ const ModuleState = require('./ModuleState');
 const ModuleType = require('./ModuleType');
 const resolveRequest = require('../utils/resolveRequest');
 const { MatchState, Sources } = require('../source/Sources');
+const { travelNamespaceFromRoot } = require('../utils/travelNamespace');
 
 const NamespaceDuplicateError = require('../errors/NamespaceDuplicateError');
 
@@ -45,8 +46,12 @@ class ClosureTree {
     this.namespaceToRequest = new Map();
     /** @type {Map<string, ClosureModule>} */
     this.requestToModule = new Map();
-    /** @type {Map<string, Namespace>} */
-    this.roots = new Map();
+    /** @type {Namespace} */
+    this.roots = {
+      name: undefined,
+      fullname: undefined,
+      subs: new Map() // store all roots.
+    };
 
     /** @type {Sources} */
     this.sources = new Sources(sources, env.context, env.fs);
@@ -147,7 +152,7 @@ class ClosureTree {
   clear() {
     this.namespaceToRequest.clear();
     this.requestToModule.clear();
-    this.roots.clear();
+    this.roots.subs.clear();
     this.sources.clear();
     this.errors.length = 0;
     this.warnings.length = 0;
@@ -203,34 +208,35 @@ class ClosureTree {
 
   /**
    * Get the specific Namespace object.
-   * @param {string} namespace Dot-separated sequence of a-z, A-Z, 0-9, _ and $.
+   * @param {string} [namespace] Dot-separated sequence of a-z, A-Z, 0-9, _ and $.
    * @param {boolean} [constructMissing]
    * @returns {Namespace | null}
    */
   getNamespace(namespace, constructMissing = false) {
-    if (typeof namespace !== 'string') { return null; }
+    if (typeof namespace !== 'string') { return this.roots; }
 
-    let parts = namespace.split('.');
     /** @type {Namespace} */
-    let target = { name: "", subs: this.roots };
-    for (const part of parts) {
+    let target = this.roots;
+    travelNamespaceFromRoot(namespace, (name, fullname) => {
       const oldTarget = target;
-      target = target.subs.get(part);
+      target = oldTarget.subs.get(name);
       if (target === undefined) {
         if (!constructMissing) {
           target = null;
-          break;
+          // Return false to stop travel.
+          return false;
         }
-        target = { name: part, subs: new Map() };
-        oldTarget.subs.set(part, target);
+        target = { name, fullname, subs: new Map() };
+        oldTarget.subs.set(name, target);
       }
-    }
+    });
     return target;
   }
 
   /**
    * Get namespace sub parts.  
-   * @param {string} namespace Dot-separated sequence of a-z, A-Z, 0-9, _ and $.
+   * @param {string} [namespace] Dot-separated sequence of a-z, A-Z, 0-9, _ and $.  
+   * If undefined, return all root namespaces.
    * @returns {string[] | null} Return null if the namespace not found.
    */
   getSubNamespace(namespace) {

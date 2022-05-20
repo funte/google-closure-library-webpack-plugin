@@ -10,7 +10,7 @@ const ModuleType = require('../src/closure/ModuleType');
 const resolveRequest = require('../src/utils/resolveRequest');
 const { MatchState } = require('../src/source/Sources');
 
-describe('Test ClosureTree', function () {
+describe('Test ClosureTree', () => {
   const env = new Environment({ context: resolveRequest('fixtures', __dirname) });
   const tree = new ClosureTree({
     base: '../../node_modules/google-closure-library/closure/goog/base.js',
@@ -126,20 +126,24 @@ describe('Test ClosureTree', function () {
       let namespace = tree.getNamespace('a', true);
       expect(namespace).to.exist;
       expect(namespace.name).to.equal('a');
-      expect(tree.roots.has('a')).to.true;
+      expect(tree.roots.subs.has('a')).to.true;
 
       namespace = tree.getNamespace('a.b', true);
       expect(namespace).to.exist;
       expect(namespace.name).to.equal('b');
-      expect(tree.roots.get('a').subs.has('b')).to.true;
+      expect(tree.roots.subs.get('a').subs.has('b')).to.true;
 
       namespace = tree.getNamespace('a.b.c');
       expect(namespace).to.not.exist;
-      expect(tree.roots.get('a').subs.get('b').subs.has('c')).to.false;
+      expect(tree.roots.subs.get('a').subs.get('b').subs.has('c')).to.false;
 
-      namespace = tree.getNamespace('b');
+      namespace = tree.getNamespace('a.b.c', true);
+      expect(namespace).to.exist;
+      expect(tree.roots.subs.get('a').subs.get('b').subs.has('c')).to.true;
+
+      namespace = tree.getNamespace('other');
       expect(namespace).to.not.exist;
-      expect(tree.roots.has('b')).to.false;
+      expect(tree.roots.subs.has('other')).to.false;
     });
   });
 

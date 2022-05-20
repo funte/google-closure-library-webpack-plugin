@@ -51,6 +51,7 @@
  * Namespace object that used mange and present namespace structure.
  * @typedef {object} Namespace
  * @property {string} name This namespace name.
+ * @property {string} fullname
  * @property {Map<string, Namespace>} subs Sub parts.
  */
 /**
