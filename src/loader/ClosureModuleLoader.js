@@ -25,9 +25,7 @@ const loader = function (content, map, meta) {
       map,
       module: tree.getModule(this.resource),
       tree: this.closure.tree,
-      env: this.closure.env,
-      WPModule: this._module,
-      WPCompilation: this._compilation
+      env: this.closure.env
     });
   } catch (err) {
     tree.errors.push(err);
