@@ -1,11 +1,11 @@
 # goog.module
 `goog.module` example.  
 
-To build and run this app with NPM CLI:  
+To build and run this app with CLI:  
 ```sh
-npm install
-npm run build
-npm run start
+yarn install
+yarn build
+yarn start
 ```
 
 If all goes well, you will see this message in your browser:  

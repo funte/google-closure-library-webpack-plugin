@@ -1,8 +1,8 @@
 require('colors');
 const { Command } = require('commander');
 const fs = require('fs-extra');
-const ClosureTree = require('google-closure-library-webpack-plugin/dist/closure/ClosureTree');
-const Environment = require('google-closure-library-webpack-plugin/dist/Environment');
+const { ClosureTree } = require('google-closure-library-webpack-plugin/dist/closure/ClosureTree');
+const { Environment } = require('google-closure-library-webpack-plugin/dist/Environment');
 const pig = require('slim-pig');
 const process = require('process');
 

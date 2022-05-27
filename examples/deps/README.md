@@ -4,11 +4,11 @@ The `scripts/gen.js` shows how generate deps file by the API `ClosureTree.makeDe
 
 To build and run this app with NPM CLI:  
 ```sh
-npm install
+yarn install
 # Generate deps file for source files in src/lib directory.
-npm run gen
-npm run build
-npm run start
+yarn gen
+yarn build
+yarn start
 ```
 
 If all goes well, you will see this message in your browser:  

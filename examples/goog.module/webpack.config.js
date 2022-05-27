@@ -1,5 +1,5 @@
 const path = require('path');
-const Plugin = require('google-closure-library-webpack-plugin');
+const { GoogleClosureLibraryWebpackPlugin } = require('google-closure-library-webpack-plugin');
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
@@ -19,7 +19,7 @@ module.exports = {
     globalObject: `(this || self)`
   },
   plugins: [
-    new Plugin({
+    new GoogleClosureLibraryWebpackPlugin({
       base: './node_modules/google-closure-library/closure/goog/base.js',
       sources: [
         path.resolve(__dirname, 'src/*.js')

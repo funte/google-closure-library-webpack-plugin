@@ -4,13 +4,13 @@ The `scripts/gen.js` show how generate the JsUnit test HTML file.
 
 To run this app with NPM CLI:  
 ```sh
-npm install
+yarn install
 # See help.
-npm run help
+yarn run help
 # Generate HTML unit test files and runner.
-npm run gen
+yarn gen
 # Open the runner in browser.
-npm run test
+yarn test:all
 ```
 
 If all goes well, you will see this in your browser.   

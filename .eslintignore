@@ -1,5 +1,0 @@
-node_modules
-test/fixtures/src1-deps.js
-test/fixtures/src1/**/*
-examples/**/*
-*.d.ts

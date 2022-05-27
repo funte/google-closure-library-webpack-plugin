@@ -4,8 +4,8 @@ const path = require('path');
 const process = require('process');
 const pig = require('slim-pig');
 
-/** @typedef {import('google-closure-library-webpack-plugin/dist/types').ClosureTree} ClosureTree */
-/** @typedef {import('google-closure-library-webpack-plugin/dist/types').DependencyParam} DependencyParam */
+/** @typedef {import('google-closure-library-webpack-plugin/dist/closure/ClosureModule').DependencyParam} DependencyParam */
+/** @typedef {import('google-closure-library-webpack-plugin/dist/closure/ClosureTree').ClosureTree} ClosureTree */
 
 /**
  * Generate HTML unit test file.
