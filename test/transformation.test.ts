@@ -5,8 +5,8 @@ import { ModuleType } from '../src/closure/ClosureModule';
 import { transform } from '../src/transformation/ClosureModuleTransform';
 import { ClosureTree } from '../src/closure/ClosureTree';
 import { Environment } from '../src/Environment';
-import { generate, GenerateContext } from '../src/transformation/generate'
-import { resolveRequest } from '../src/utils/resolveRequest'
+import { generate, GenerateContext } from '../src/transformation/generate';
+import { resolveRequest } from '../src/utils/resolveRequest';
 import {
   getTransTarget,
   getRelativeRequest,
@@ -19,7 +19,6 @@ import {
 import { GoogDefineTrans } from '../src/transformation/transform/GoogDefineTrans';
 import { GoogRequireTrans } from '../src/transformation/transform/GoogRequireTrans';
 import { GoogProvideTrans } from '../src/transformation/transform/GoogProvideTrans';
-import { NamespaceUsageTrans } from '../src/transformation/transform/NamespaceUsageTrans';
 
 describe('test transformation', () => {
   describe('test transformation/template', () => {
@@ -615,10 +614,10 @@ describe('test transformation', () => {
         `^"use strict";\\r?\\n` +
         `import goog from "[^"]+";\\r?\\n` +
         `var exports = {};\\r?\\n` +
-        `goog\\.global\\.a = exports;\\r?\\n` +
         `import "[^"]+";\\r?\\n` +
         // \/[^\/]+\/ match the comment.
         `console\\.log\\(\\/[^\\/]+\\/goog\\.global\\.a\\.b\\);\\r?\\n` +
+        `goog\\.global\\.a = exports;\\r?\\n` +
         `export default exports;\\r?\\n$`,
         'i'
       ).test(source.source().toString())).to.true;
@@ -657,4 +656,4 @@ describe('test transformation', () => {
       expect(tree.errors).to.empty
     });
   });
-})
+});

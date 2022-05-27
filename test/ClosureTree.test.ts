@@ -34,7 +34,6 @@ describe('Test ClosureTree', () => {
       expect(tree.basefile).to.exist;
       expect(tree.depsfile).to.exist;
       // Should not empty.
-      debugger
       expect(tree.requestToModule.size).to.greaterThan(0);
       // Ensure goog is provided.
       expect(tree.namespaceToRequest.has('goog')).to.true;

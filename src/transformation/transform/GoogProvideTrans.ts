@@ -57,6 +57,7 @@ export class GoogProvideTrans extends GoogTrans {
     // instead the goog.exportPath_ to construct the namespaces, these 
     // transformation should not rely on any goog API.
     const chunks: string[] = [];
+    const endChunks: string[] = [];
     const isPROVIDEModule = this.module.type === ModuleType.PROVIDE;
     const isGOOGModule = this.module.type === ModuleType.GOOG;
     const isLegacyGOOGModule = !!this.module.legacy;
@@ -87,9 +88,21 @@ export class GoogProvideTrans extends GoogTrans {
         // chunk.push(`/** construct provided ${_namespace} */${_namespace} = {};\n`);
         chunks.push(`/** construct provided namespace ${providedNamespace} */${providedNamespace} = ${providedNamespace} || {};\n`);
       } else if (isLegacyGOOGModule) {
-        chunks.push(`${providedNamespace} = ${this.info.id};\n`);
+        endChunks.push(`${providedNamespace} = ${this.info.id};\n`);
       }
     }
+
+    // Append transformed export statement.
+    if (namespace === 'goog' || isGOOGModule) {
+      if (!this.info.id) {
+        throw new PluginError(`Undefined exported local variable id at file ${this.module.request}.`);
+      }
+      const exportStatement = getExportStatement(
+        this.module, this.info.id, context.env.target
+      );
+      endChunks.push(exportStatement);
+    }
+
     // Insert chunks to source.
     if (chunks.length > 0) {
       const position = isGOOGModule && this.info.declaration
@@ -102,16 +115,8 @@ export class GoogProvideTrans extends GoogTrans {
       }
       source.insert(position, chunks.join(''));
     }
-
-    // Append transformed export statement.
-    if (namespace === 'goog' || isGOOGModule) {
-      if (!this.info.id) {
-        throw new PluginError(`Undefined exported local variable id at file ${this.module.request}.`);
-      }
-      const exportStatement = getExportStatement(
-        this.module, this.info.id, context.env.target
-      );
-      source.insert(moduleSource.length, exportStatement);
+    if (endChunks.length > 0) {
+      source.insert(moduleSource.length, endChunks.join(''));
     }
   }
 }

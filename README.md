@@ -3,7 +3,7 @@ Webpack5 plugin for google-closure-library, inspired from [closure-webpack-plugi
 
 This plugin transpile the Closure module to ES and CommonJS module, no need to install [google-closure-compiler](https://github.com/google/closure-compiler).  
 
-Now support `google-closure-library@20200830.0.0`, `webpack@^5.29.0`, Webpack watch mode and these APIs:  
+Now support `google-closure-library@<=20210808.0.0`, `webpack@>=5.21.0`, Webpack watch mode and these goog APIs:  
 * `goog.require`  
   Will be transpiled to ES or CommonJS import statement, depend on the [target](#target--optional-"esm"-or-"commonjs"-defaults-to-"esm") option.  
 * `goog.provide`(deprecated), `goog.module` and `goog.module.declareLegacyNamespace`  

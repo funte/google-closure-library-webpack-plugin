@@ -17,7 +17,6 @@ export = function (
 ): void {
   const { callback, closure, _compiler, resource } = this;
 
-  debugger;
   // Do nothing if not Closure module.
   if (!closure || !closure.tree.hasModule(resource)) {
     return callback(null, content, map, meta);

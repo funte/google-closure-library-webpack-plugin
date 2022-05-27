@@ -53,7 +53,6 @@ export class LoaderPlugin {
         normalModuleFactory.hooks.module.tap(
           PLUGIN_NAME,
           (module, createData, resolveData) => {
-            debugger;
             if (module instanceof NormalModule) {
               // Only inject Closure module loader context.
               if (this.tree.hasModule(module.resource)) {

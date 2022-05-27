@@ -408,7 +408,7 @@ export class ClosureTree {
   //   // TODO: check
   //   // Check circular dependency;
   //   // Check required namespace missing;
-  //   // Check required namespace of loaded module, error if requried 
+  //   // Check require chain, check required namespace of loaded module, error if requried 
   //   // namespace not exposed, if require is GOOG module without legacy, prompt 
   //   // "please add goog.module.declareLegacyNamespace";
   // }
