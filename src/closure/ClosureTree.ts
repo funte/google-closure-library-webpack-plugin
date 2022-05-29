@@ -147,8 +147,6 @@ export class ClosureTree {
    * @throws {@link PluginError} Throw PluginError if the required namespace missing or load failed.  
    */
   check(): void {
-    const start = Date.now().valueOf();
-
     let index = 0;
     // Store DFS number.
     const indexMap: Map<ClosureModule, { index: number, anyPROVIDE: boolean }> = new Map();
@@ -190,7 +188,7 @@ export class ClosureTree {
           moduleStack.forEach(module => { indexMap.get(module).anyPROVIDE = true; });
         }
 
-        const requiredModuleIndex = indexMap.get(requiredModule)?.index as number;
+        const requiredModuleIndex = indexMap.get(requiredModule)?.index;
         if (typeof requiredModuleIndex !== 'number') {
           lowIndex = Math.min(
             lowIndex,
@@ -202,7 +200,7 @@ export class ClosureTree {
       }
 
       // Error if GOOG module not has exposed namespace but connect PROVIDE module.
-      // Expect all Closure library modules.
+      // Except all Closure library modules.
       if (module.type === ModuleType.GOOG && !module.legacy
         && indexMap.get(module)?.anyPROVIDE
       ) {

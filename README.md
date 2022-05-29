@@ -61,12 +61,12 @@ TODO: add error case.
 These features will add to next version.  
 * ✔ ClosureTree.check;  
 * More test, test whole Closure library;  
-* Check whether unexposed namespace(expect Closure library modules) outside PROVIDE and legacy GOOG module has dot serparator, like this:  
+* Check whether unexposed namespace(except Closure library modules) outside PROVIDE and legacy GOOG module has dot serparator, like this:  
   ```
   goog.module("a.b.c");
   ```
   this module not has exposed namespace but the provided namespace "a.b.c" has dot separator.
-* Check whether unexposed namespce(expect Closure library modules) outside PROVIDE and legacy GOOG module duplicate with other exposed namespace, like this:  
+* Check whether unexposed namespce(except Closure library modules) outside PROVIDE and legacy GOOG module duplicate with other exposed namespace, like this:  
   ```
   // GOOG module a has a unexposed namespace "a".
   goog.module("a");
