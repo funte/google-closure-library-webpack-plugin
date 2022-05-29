@@ -29,6 +29,7 @@ export const schema: any = {
         }
       }
     },
+    checkExposed: { type: 'boolean' },
     debug: {
       type: 'object',
       properties: {

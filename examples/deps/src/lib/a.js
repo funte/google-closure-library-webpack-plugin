@@ -3,6 +3,7 @@
 // !!One file only could has on goog.module, and its must be first line.
 // !!goog.module will not expose any globally accessible object. 
 goog.module('a');
+goog.module.declareLegacyNamespace();
 
 goog.require('goog.string');
 

@@ -8,11 +8,11 @@ export class ModifyImplicitNamespaceWarning extends PluginError {
   public readonly name: string = 'ModifyImplicitNamespaceWarning';
 
   /**
-   * @param desc - Optional description.
+   * @param options.desc - Optional description.
    */
   constructor(options: {
     file: string,
-    loc: SourceLocation,
+    loc?: SourceLocation,
     namespace: string,
     desc?: string
   }) {

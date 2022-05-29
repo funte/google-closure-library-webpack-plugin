@@ -8,12 +8,12 @@ export class UnexpectCallingError extends PluginError {
   public readonly name: string = 'UnexpectCallingError';
 
   /**
-   * @param name - Closure function name.
-   * @param desc - Optional description.
+   * @param options.name - Closure function name.
+   * @param options.desc - Optional description.
    */
   constructor(options: {
     file: string,
-    loc: SourceLocation,
+    loc?: SourceLocation,
     name: string,
     desc?: string
   }) {

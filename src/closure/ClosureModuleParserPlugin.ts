@@ -882,60 +882,7 @@ export class ClosureModuleParserPlugin {
       const module = parser.state.closure.module as ClosureModule;
       if (module.isbase) { return; }
 
-      if (module.type === ModuleType.PROVIDE || module.legacy) {
-        // Store all required and implicit namespaces.
-        const allrequired: Set<string> = new Set();
-        for (const namespace of module.requires.keys()) {
-          travelNamespaceToRoot(namespace, (name, fullname) => {
-            allrequired.add(fullname);
-          });
-        }
-        // Store all implicit namespaces.
-        const allImplicities: Set<string> = new Set();
-
-        Array.from(module.provides.values())
-          // Sort provided namespaces by end position.
-          .sort((a, b) => {
-            // Error if this provide information undefined, this should not 
-            // happen, just in case.
-            if (!a || !b) {
-              throw new PluginError(`Undefined provide information at file ${module.request}.`);
-            }
-            // Error if expression range property undefined.
-            if (!a.expr?.range || typeof a.expr?.range[1] !== 'number'
-              || !b.expr?.range || typeof b.expr?.range[1] !== 'number'
-            ) {
-              throw new PluginError(`Undefined expression range property at file ${module.request}.`);
-            }
-
-            const apos = a.expr ? a.expr.range[1] : 0;
-            const bpos = b.expr ? b.expr.range[1] : 0;
-            return apos - bpos;
-          })
-          // Fill the implicit namespaces.
-          .forEach(info => {
-            // Error if this provide information undefined, this should not 
-            // happen, just in case.
-            if (!info) {
-              throw new PluginError(`Undefined provide information at file ${module.request}.`);
-            }
-
-            if (info.implicities === undefined) {
-              info.implicities = [];
-            }
-            travelNamespaceToRoot(info.fullname, (name, fullname) => {
-              // If current namespace has required, stop it.
-              if (allrequired.has(fullname)) { return false; }
-              // If current namespace not contruct and not provided.
-              if (!allImplicities.has(fullname) && !module.provides.has(fullname)) {
-                // @ts-ignore
-                info.implicities.push(fullname);
-                allImplicities.add(fullname);
-              }
-            });
-            info.implicities = info.implicities.reverse();
-          });
-      }
+      module.parserImplicities();
     });
   }
 

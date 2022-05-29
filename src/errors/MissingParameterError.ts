@@ -8,12 +8,12 @@ export class MissingParameterError extends PluginError {
   public readonly name: string = 'MissingParameterError';
 
   /**
-   * @param param - Parameter name.
-   * @param desc - Optional description.
+   * @param options.param - Parameter name.
+   * @param options.desc - Optional description.
    */
   constructor(options: {
     file: string,
-    loc: SourceLocation,
+    loc?: SourceLocation,
     param: string,
     desc?: string
   }) {

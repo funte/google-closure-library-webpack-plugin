@@ -4,6 +4,7 @@ import { asString } from '../utils/asString';
 import { VERSIONS } from '../langs';
 import { PluginError } from '../errors/PluginError';
 import { resolveRequest } from '../utils/resolveRequest';
+import { travelNamespaceToRoot } from '../utils/travelNamespace';
 
 import { InvalidNamespaceError } from '../errors/InvalidNamespaceError';
 import { NamespaceConflictError } from '../errors/NamespaceConflictError';
@@ -172,7 +173,8 @@ export class ClosureModule {
   public isdeps: boolean = false;
 
   public type: ModuleType = ModuleType.SCRIPT;
-  public legacy: StatementNode | undefined;
+  /** True if goog.module.declareLegacyNamespace missing. */
+  public legacy: true | StatementNode | undefined;
   public lang: string = 'es3';
   public provides: Map<string, ProvideInfo | undefined> = new Map();
   public requires: Map<string, RequireInfo | undefined> = new Map();
@@ -428,6 +430,66 @@ export class ClosureModule {
       if (this.errors.length === 0) {
         this.state = ModuleState.LOAD;
       }
+    }
+  }
+
+  /** Parser and fill the implicit namespaces of all provide informations, its auto execute while parsing. */
+  parserImplicities(): void {
+    if (this.type === ModuleType.PROVIDE || this.legacy) {
+      // Store all required and implicit namespaces.
+      const allrequired: Set<string> = new Set();
+      for (const namespace of this.requires.keys()) {
+        travelNamespaceToRoot(namespace, (name, fullname) => {
+          allrequired.add(fullname);
+        });
+      }
+      // Store all implicit namespaces.
+      const allImplicities: Set<string> = new Set();
+
+      Array.from(this.provides.values())
+        // Sort provided namespaces by end position.
+        .sort((a, b) => {
+          // Error if this provide information undefined, this should not 
+          // happen, just in case.
+          if (!a || !b) {
+            throw new PluginError(`Undefined provide information at file ${this.request}.`);
+          }
+          // Error if expression range property undefined.
+          if (!a.expr?.range || typeof a.expr?.range[1] !== 'number'
+            || !b.expr?.range || typeof b.expr?.range[1] !== 'number'
+          ) {
+            throw new PluginError(`Undefined expression range property at file ${this.request}.`);
+          }
+
+          const apos = a.expr ? a.expr.range[1] : 0;
+          const bpos = b.expr ? b.expr.range[1] : 0;
+          return apos - bpos;
+        })
+        // Fill the implicit namespaces.
+        .forEach(info => {
+          // Error if this provide information undefined, this should not 
+          // happen, just in case.
+          if (!info) {
+            throw new PluginError(`Undefined provide information at file ${this.request}.`);
+          }
+
+          if (info.implicities) {
+            info.implicities.length = 0;
+          } else {
+            info.implicities = [];
+          }
+          travelNamespaceToRoot(info.fullname, (name, fullname) => {
+            // If current namespace has required, stop it.
+            if (allrequired.has(fullname)) { return false; }
+            // If current namespace not contruct and not provided.
+            if (!allImplicities.has(fullname) && !this.provides.has(fullname)) {
+              // @ts-ignore
+              info.implicities.push(fullname);
+              allImplicities.add(fullname);
+            }
+          });
+          info.implicities = info.implicities.reverse();
+        });
     }
   }
 

@@ -1,10 +1,13 @@
 import { expect } from "chai";
 
 import { ClosureTree } from '../src/closure/ClosureTree';
-import { ClosureModule, ModuleState, ModuleType } from '../src/closure/ClosureModule';
+import { ModuleState, ModuleType } from '../src/closure/ClosureModule';
 import { Environment } from "../src/Environment";
 import { resolveRequest } from '../src/utils/resolveRequest';
 import { MatchState } from '../src/source/Sources';
+
+import { CircularReferenceError } from "../src/errors/CircularReferenceError";
+import { BadRequire } from '../src/errors/BadRequire';
 
 describe('Test ClosureTree', () => {
   const env = new Environment({ context: resolveRequest('fixtures', __dirname) });
@@ -54,6 +57,108 @@ describe('Test ClosureTree', () => {
           tree.isLibraryModule(pair[0]) === false
         )
       ).to.true;
+    });
+  });
+
+  describe('test check', () => {
+    const tree = new ClosureTree({
+      base: '../../node_modules/google-closure-library/closure/goog/base.js',
+      sources: [
+        // For mock module request.
+        'path/to/**/*'
+      ],
+      env
+    });
+
+    it('check circular require', () => {
+      tree.clear();
+      tree.scan();
+
+      // √: a->b->c->d
+      expect(tree.errors).to.empty;
+      tree.loadModule('path/to/a',
+        `goog.provide("a");\n` +
+        `goog.require("b");\n`
+      );
+      expect(tree.errors).to.empty;
+      tree.loadModule('path/to/b',
+        `goog.provide("b");\n` +
+        `goog.require("c");\n`
+      );
+      expect(tree.errors).to.empty;
+      tree.loadModule('path/to/c',
+        `goog.provide("c");\n` +
+        `goog.require("d");\n`
+      );
+      expect(tree.errors).to.empty;
+      tree.loadModule('path/to/d',
+        `goog.provide("d");\n`
+      );
+      expect(tree.errors).to.empty;
+
+      // x: e-f-g-f
+      tree.loadModule('path/to/e',
+        `goog.provide("e");\n` +
+        `goog.require("f");\n`
+      );
+      expect(tree.errors).to.empty;
+      tree.loadModule('path/to/f',
+        `goog.provide("f");\n` +
+        `goog.require("g");\n`
+      );
+      expect(tree.errors).to.empty;
+      tree.loadModule('path/to/g',
+        `goog.provide("g");\n` +
+        `goog.require("f");\n`
+      );
+      expect(tree.errors).to.empty;
+
+      expect(() => { tree.check(); }).to.throw(CircularReferenceError);
+    });
+
+    it('check require self provided namespace', () => {
+      tree.clear();
+      tree.scan();
+
+      tree.loadModule('path/to/a',
+        `goog.provide("a");\n` +
+        `goog.provide("a.b");\n` +
+        `goog.require("a.b");\n`
+      );
+      expect(tree.errors).to.empty;
+
+      expect(() => { tree.check(); }).to.throw(BadRequire);
+    });
+
+    describe('check unexposed namespace in GOOG module', () => {
+      it('if GOOG module not has exposed namespace but connect PROVIDE module, should error', () => {
+        tree.clear();
+        tree.scan();
+        // tree.loadModule('path/to/a',
+        const module = tree.loadModule('path/to/a',
+          `goog.module("a");\n` +
+          `const b = goog.require("b");\n`
+        );
+        tree.loadModule('path/to/b',
+          `goog.module("b");\n` +
+          `goog.require("c");\n`
+        );
+        tree.loadModule('path/to/c',
+          `goog.provide("c");\n`
+        );
+        expect(() => { tree.check(); }).to.throw(BadRequire);
+
+        tree.clear();
+        tree.scan();
+        tree.loadModule('path/to/a',
+          `goog.provide("a");\n` +
+          `goog.require("a.b");\n`
+        );
+        tree.loadModule('path/to/b',
+          `goog.module("a.b");\n`
+        );
+        expect(() => { tree.check(); }).to.throw(BadRequire);
+      });
     });
   });
 

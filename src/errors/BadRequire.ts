@@ -8,11 +8,11 @@ export class BadRequire extends PluginError {
   public readonly name: string = 'BadRequire';
 
   /**
-   * @param desc - Optional description.
+   * @param options.desc - Optional description.
    */
   constructor(options: {
     file: string,
-    loc: SourceLocation,
+    loc?: SourceLocation,
     desc?: string
   }) {
     const { file, loc, desc } = options;

@@ -8,11 +8,11 @@ export class NamespaceDuplicateError extends PluginError {
   public readonly name: string = 'NamespaceDuplicateError';
 
   /**
-   * @param desc - Optional description.
+   * @param options.desc - Optional description.
    */
   constructor(options: {
     file: string,
-    loc: SourceLocation,
+    loc?: SourceLocation,
     namespace: string,
     isProvide: boolean,
     desc?: string

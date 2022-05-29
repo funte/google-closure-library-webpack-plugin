@@ -6,6 +6,8 @@ import {
   getRequireStatement
 } from '../template';
 
+import { UnknowNamespaceError } from '../../errors/UnknowNamespaceError';
+
 import type { GenerateContext } from '../generate';
 import type { ReplaceSource } from 'webpack-sources';
 import type { ClosureModule, RequireInfo } from '../../closure/ClosureModule';
@@ -29,7 +31,7 @@ export class GoogRequireTrans extends GoogTrans {
     let requireVar: string | null;
     const requiredModule = context.tree.getModule(namespace);
     if (!requiredModule) {
-      throw new Error(`Unknow namespace ${namespace}.`);
+      throw new UnknowNamespaceError({ namespace });
     }
     if (namespace === 'goog') {
       requireVar = 'goog';

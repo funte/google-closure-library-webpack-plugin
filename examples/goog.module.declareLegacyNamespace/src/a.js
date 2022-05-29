@@ -9,8 +9,6 @@ goog.module.declareLegacyNamespace();
 
 goog.require('goog.string');
 
-console.log(a.wahaha);
-
 // Export Message function.
 // This line will be transformed to:
 //  var exports = {};

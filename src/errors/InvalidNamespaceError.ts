@@ -8,11 +8,11 @@ export class InvalidNamespaceError extends PluginError {
   public readonly name: string = 'InvalidNamespaceError';
 
   /**
-   * @param  desc - Optional description.
+   * @param  options.desc - Optional description.
    */
   constructor(options: {
     file: string,
-    loc: SourceLocation,
+    loc?: SourceLocation,
     desc?: string
   }) {
     const { file, loc, desc } = options;

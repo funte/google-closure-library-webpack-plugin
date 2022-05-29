@@ -3,7 +3,7 @@ Webpack5 plugin for google-closure-library, inspired from [closure-webpack-plugi
 
 This plugin transpile the Closure module to ES and CommonJS module, no need to install [google-closure-compiler](https://github.com/google/closure-compiler).  
 
-Now support `google-closure-library@<=20210808.0.0`, `webpack@>=5.21.0`, Webpack watch mode and these goog APIs:  
+Now support `google-closure-library@<=20220502.0.0`, `webpack@>=5.21.0`, Webpack watch mode and these goog APIs:  
 * `goog.require`  
   Will be transpiled to ES or CommonJS import statement, depend on the [target](#target--optional-"esm"-or-"commonjs"-defaults-to-"esm") option.  
 * `goog.provide`(deprecated), `goog.module` and `goog.module.declareLegacyNamespace`  
@@ -53,3 +53,24 @@ npm install google-closure-library-webpack-plugin --save-dev
   + `COMPILED` force to `true`;  
   + `goog.DEBUG` force to `false`;  
   + Replace `goog.global` with [options.output.globalObject](https://webpack.js.org/configuration/output/#outputglobalobject);  
+
+## Error case
+TODO: add error case.
+
+## TODOS
+These features will add to next version.  
+* ✔ ClosureTree.check;  
+* More test, test whole Closure library;  
+* Check whether unexposed namespace(expect Closure library modules) outside PROVIDE and legacy GOOG module has dot serparator, like this:  
+  ```
+  goog.module("a.b.c");
+  ```
+  this module not has exposed namespace but the provided namespace "a.b.c" has dot separator.
+* Check whether unexposed namespce(expect Closure library modules) outside PROVIDE and legacy GOOG module duplicate with other exposed namespace, like this:  
+  ```
+  // GOOG module a has a unexposed namespace "a".
+  goog.module("a");
+  
+  // PROVIDE module b expose a namespace b "a.b", part "a" is duplicate.
+  goog.provide("a.b");
+  ```

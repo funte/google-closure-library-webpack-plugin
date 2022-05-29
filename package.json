@@ -18,8 +18,8 @@
     "watch": "rm -rf ./dist && tsc -watch",
     "test": "yarn run test:lint && yarn run test:all",
     "test:lint": "eslint src --ext ts",
-    "test:all": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'test/**/*.ts' -t 60000",
-    "test:one": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'test/transformation.test.ts'",
+    "test:all": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'test/**/*.ts' -t 120000",
+    "test:one": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'test/ClosureTree.test.ts' -t 60000",
     "updateExampleVersions": "node ./scripts/version.js"
   },
   "dependencies": {
@@ -34,7 +34,7 @@
     "webpack-sources": "^3.2.3"
   },
   "peerDependencies": {
-    "google-closure-library": "<=20210406.0.0",
+    "google-closure-library": "<=20220502.0.0",
     "webpack": ">=5.21.0"
   },
   "devDependencies": {
@@ -53,7 +53,7 @@
     "mocha": "^10.0.0",
     "rimraf": "^3.0.2",
     "ts-node": "^10.8.0",
-    "typescript": "^4.6.4"
+    "typescript": "^4.7.2"
   },
   "config": {
     "commitizen": {

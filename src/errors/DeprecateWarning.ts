@@ -2,17 +2,19 @@ import { StringFormatter } from "slim-pig/dist/lib/str";
 
 import { PluginError } from "./PluginError";
 
+import type { SourceLocation } from 'estree';
+
 export class DeprecateWarning extends PluginError {
   public readonly name: string = 'DeprecateWarning';
 
   /**
-   * @param name - Deprecated Closure function or object name.
-   * @param alternate - Alternative Closure function or object name.
-   * @param desc - Optional description.
+   * @param options.name - Deprecated Closure function or object name.
+   * @param options.alternate - Alternative Closure function or object name.
+   * @param options.desc - Optional description.
    */
   constructor(options: {
     file: string,
-    loc: any,
+    loc?: SourceLocation,
     name: string,
     alternate: string,
     desc?: string

@@ -8,6 +8,8 @@ import { resolveRequest } from '../utils/resolveRequest';
 import { MatchState, Sources } from '../source/Sources';
 import { travelNamespaceFromRoot } from '../utils/travelNamespace';
 
+import { CircularReferenceError } from '../errors/CircularReferenceError';
+import { BadRequire } from '../errors/BadRequire';
 import { NamespaceDuplicateError } from '../errors/NamespaceDuplicateError';
 
 import type { ClosureModule, DependencyParam } from './ClosureModule';
@@ -136,6 +138,135 @@ export class ClosureTree {
     this.getNamespaceObject(namespace, true);
   }
 
+  /** 
+   * Check Closure tree.  
+   * This will auto perform after {@link ClosureTree.scan}.  
+   * @see https://github.com/google/closure-library/blob/c3b90b/closure-deps/lib/depgraph.js#L336  
+   * @throws {@link CircularReferenceError} Throw CircularReferenceError if has circular reference.  
+   * @throws {@link BadRequire} Throw BadRequire if GOOG module not has exposed namespace but connect PROVIDE module.  
+   * @throws {@link PluginError} Throw PluginError if the required namespace missing or load failed.  
+   */
+  check(): void {
+    const start = Date.now().valueOf();
+
+    let index = 0;
+    // Store DFS number.
+    const indexMap: Map<ClosureModule, { index: number, anyPROVIDE: boolean }> = new Map();
+    // Store potentially strongly conected modules.
+    const moduleStack: Set<any> = new Set();
+
+    /**
+     * @param options.anyPROVIDE - True if connect any PROVIDE module.
+     */
+    const innerCheck = (module: ClosureModule, anyPROVIDE: boolean): number => {
+      const thisIndex = index++;
+      indexMap.set(module, { index: thisIndex, anyPROVIDE });
+      // Is current module has exposed namespace.
+      let lowIndex = thisIndex;
+
+      moduleStack.add(module);
+
+      let requiredModule: any = undefined;
+      for (const namespace of module.requires.keys()) {
+        requiredModule = this.getModule(namespace);
+        // Error if the required namespace missing or load failed.
+        if (!requiredModule) {
+          throw new PluginError(`Unknow namespace ${namespace} or the module load failed.`);
+        }
+
+        // Error if require self provided namespace.
+        if (module.provides.has(namespace)) {
+          const loc: any = module.requires.get(namespace)?.expr?.loc;
+          throw new BadRequire({
+            file: module.request, loc,
+            desc: `cannot require self provided namespace.`
+          });
+        }
+
+        // First occurs a PROVIDE moudle, flag all connected modules in stack.
+        const requirePROVIDE = requiredModule.type === ModuleType.PROVIDE;
+        if (!anyPROVIDE && requirePROVIDE) {
+          // @ts-ignore
+          moduleStack.forEach(module => { indexMap.get(module).anyPROVIDE = true; });
+        }
+
+        const requiredModuleIndex = indexMap.get(requiredModule)?.index as number;
+        if (typeof requiredModuleIndex !== 'number') {
+          lowIndex = Math.min(
+            lowIndex,
+            innerCheck(requiredModule, anyPROVIDE || requirePROVIDE)
+          );
+        } else if (moduleStack.has(requiredModule)) {
+          lowIndex = Math.min(lowIndex, requiredModuleIndex);
+        }
+      }
+
+      // Error if GOOG module not has exposed namespace but connect PROVIDE module.
+      // Expect all Closure library modules.
+      if (module.type === ModuleType.GOOG && !module.legacy
+        && indexMap.get(module)?.anyPROVIDE
+      ) {
+        if (module.state === ModuleState.CACHE) {
+          this.loadModule(module.request);
+        }
+        if (!module.legacy) {
+          if (this.isLibraryModule(module.request)) {
+            // This warning is important, should show it.
+            const warning = new BadRequire({
+              file: module.request,
+              desc: `detect requre a PROVIDE module but namespace in this module not exposed, but this plugin will fix it`
+            });
+            this.warnings.push(warning);
+
+            module.legacy = true;
+            module.parserImplicities();
+          } else {
+            const requireStack = Array.from(moduleStack).map(module => module.request);
+            if (requiredModule) {
+              requireStack.push(requiredModule.request);
+            }
+            throw new BadRequire({
+              file: module.request,
+              desc: `detect require a PROVIDE module but namespace in this module not exposed,` +
+                ` maybe you forget add goog.module.declareLegacyNamespace,` +
+                ` see the require stack: \n${requireStack.join('\n')} `
+            });
+          }
+        }
+      }
+
+      // Found strongly conected modules.
+      if (lowIndex === thisIndex) {
+        const modules = [...moduleStack];
+        const scc: any[] = [];
+        for (let i = modules.length - 1; i > -1; i--) {
+          scc.push(modules[i]);
+          moduleStack.delete(modules[i]);
+          if (modules[i] === module) {
+            break;
+          }
+        }
+        if (scc.length > 1) {
+          throw new CircularReferenceError({
+            stack: modules.map(module => module.request).join('\n')
+          });
+        }
+      }
+
+      return lowIndex;
+    };
+
+    for (const module of this.requestToModule.values()) {
+      if (module.state < ModuleState.CACHE) {
+        new PluginError(`Unload module ${module.request}.`);
+      }
+      // If current Closure module not checked.
+      if (!indexMap.has(module)) {
+        innerCheck(module, module.type === ModuleType.PROVIDE);
+      }
+    }
+  }
+
   clear(): void {
     this.namespaceToRequest.clear();
     this.requestToModule.clear();
@@ -235,11 +366,11 @@ export class ClosureTree {
 
   /**
    * If the request is a library module, return true.
-   * @throws {@link Error} Throw Error if Closure library base.js file not found.
+   * @throws {@link PluginError} Throw PluginError if Closure library base.js file not found.
    */
   isLibraryModule(request: string): boolean {
     if (!this.libpath) {
-      throw new Error('Could not find Closure library base.js file.');
+      throw new PluginError('Could not find Closure library base.js file.');
     }
 
     return pig.fs.isSubDirectory(
@@ -303,7 +434,7 @@ export class ClosureTree {
    * Create list of goog.addDependency params.
    * @param filter - Test each Closure module, defaults filter out all Closure library modules.  
    * @param base - Defautls base.js file. 
-   * @throws {@link Error} Throw Error if Closure library base.js file not found.
+   * @throws {@link PluginError} Throw PluginError if Closure library base.js file not found.
    */
   makeDependencies(
     filter: (module: ClosureModule) => boolean = module => !this.isLibraryModule(module.request),
@@ -325,7 +456,7 @@ export class ClosureTree {
    * Create dependency param from the request module.
    * @param arg - Request or namespace.
    * @param base - Defautls base.js file. 
-   * @throws {@link Error} Throw Error if Closure library base.js file not found.
+   * @throws {@link PluginError} Throw PluginError if Closure library base.js file not found.
    */
   makeDependencyParam(arg: string, base?: string): DependencyParam | null {
     const module = this._get(arg);
@@ -367,7 +498,7 @@ export class ClosureTree {
    * Get the relative path from base.js to the js file.
    * @param arg - Request or namespace.
    * @param base - Defautls base.js file. 
-   * @throws {@link Error} Throw Error if Closure library base.js file not found.
+   * @throws {@link PluginError} Throw PluginError if Closure library base.js file not found.
    */
   makeRelPath(arg: string, base?: string): string | null {
     let googpath: string;
@@ -376,7 +507,7 @@ export class ClosureTree {
     } else if (typeof this.googpath === 'string') {
       googpath = this.googpath;
     } else {
-      throw new Error('Could not find Closure library base.js file.');
+      throw new PluginError('Could not find Closure library base.js file.');
     }
 
     const module = this._get(arg);
@@ -404,15 +535,6 @@ export class ClosureTree {
     return this.sources.match(request);
   }
 
-  // check(): void {
-  //   // TODO: check
-  //   // Check circular dependency;
-  //   // Check required namespace missing;
-  //   // Check require chain, check required namespace of loaded module, error if requried 
-  //   // namespace not exposed, if require is GOOG module without legacy, prompt 
-  //   // "please add goog.module.declareLegacyNamespace";
-  // }
-
   /** Reload a module that already in this tree. */
   reloadModule(request: string, source?: string | Buffer): ClosureModule | null {
     const module = this._get(request);
@@ -427,14 +549,36 @@ export class ClosureTree {
    * @param patterns - List of patterns, defaults scan all.  
    */
   scan(patterns?: string | string[]): void {
+    let changed = false;
     const result = this.sources.scan(patterns);
     // Load new files.
-    result.added.forEach(file => this.loadModule(file));
+    if (result.added.size) {
+      changed = true;
+      result.added.forEach(file => this.loadModule(file));
+    }
     // Reload modified files.
-    result.modified.forEach(file => this.reloadModule(file));
+    if (result.modified.size) {
+      changed = true;
+      result.modified.forEach(file => this.reloadModule(file));
+    }
     // Delete removed files.
-    result.removed.forEach(file => this.deleteModule(file));
+    if (result.removed.size) {
+      changed = true;
+      result.removed.forEach(file => this.deleteModule(file));
+    }
     // Delete missing files.
-    result.missing.forEach(file => this.deleteModule(file));
+    if (result.missing.size) {
+      changed = true;
+      result.missing.forEach(file => this.deleteModule(file));
+    }
+    if (changed) {
+      // Reconstruct all namespace object.
+      this.roots.subs.clear();
+      for (const namespace of this.namespaceToRequest.keys()) {
+        this.getNamespaceObject(namespace, true);
+      }
+
+      this.check();
+    }
   }
 }

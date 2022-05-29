@@ -40,7 +40,7 @@ export class GoogProvideTrans extends GoogTrans {
     }
 
     // Clear the goog.module.declareLegacyNamespace statement.
-    if (this.module.legacy) {
+    if (typeof this.module.legacy === 'object') {
       if (!this.module.legacy.range) {
         throw new PluginError(`Undefined legacy statement range property at file ${this.module.request}.`);
       }

@@ -2,6 +2,7 @@ import _fs from 'fs-extra';
 
 import { findNodeModules } from './utils/findNodeModules';
 
+import type { PluginOptions } from './Plugin';
 import type { TargetOption } from './Plugin';
 
 export class Environment {

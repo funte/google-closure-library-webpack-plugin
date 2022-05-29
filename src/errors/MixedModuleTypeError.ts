@@ -8,7 +8,7 @@ export class MixedModuleTypeError extends PluginError {
   public readonly name: string = 'MixedModuleTypeError';
 
   /**
-   * @param desc - Optional description.
+   * @param options.desc - Optional description.
    */
   constructor(options: {
     file: string,

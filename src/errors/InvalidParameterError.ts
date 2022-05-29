@@ -8,13 +8,13 @@ export class InvalidParameterError extends PluginError {
   public readonly name: string = 'InvalidParameterError';
 
   /**
-   * @param param - Parameter name.
-   * @param prop - Parameter property name.
-   * @param desc - Optional description.
+   * @param options.param - Parameter name.
+   * @param options.prop - Parameter property name.
+   * @param options.desc - Optional description.
    */
   constructor(options: {
     file: string,
-    loc: SourceLocation,
+    loc?: SourceLocation,
     param: string,
     prop?: string,
     desc?: string

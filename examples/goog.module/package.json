@@ -6,7 +6,7 @@
     "start": "http-server -o ./build/index.html"
   },
   "dependencies": {
-    "google-closure-library": "^20210906.0.0",
+    "google-closure-library": "^20210406.0.0",
     "google-closure-library-webpack-plugin": "^2.1.1",
     "html-webpack-plugin": "^5.5.0",
     "http-server": "^14.1.0",

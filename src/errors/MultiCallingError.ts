@@ -6,7 +6,7 @@ export class MultiCallingError extends PluginError {
   public readonly name: string = 'MultiCallingError';
 
   /**
-   * @param desc - Optional description.
+   * @param options.desc - Optional description.
    */
   constructor(options: {
     file: string,
