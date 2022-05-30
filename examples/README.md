@@ -8,3 +8,4 @@
 | [goog.provide](./goog.provide/README.md) | `goog.provide` example |
 | [deps](./deps/README.md) | Speedup the Webpack building process with deps file |
 | [test](./test/README.md) | Using `goog.addDependency` load and execute JsUnit tests in an unbundled, uncompiled browser environment |
+| [react](./react//README.md) | Convert Closure library to ES modules and use it with `react` |
