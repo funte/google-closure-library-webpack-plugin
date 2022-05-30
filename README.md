@@ -74,3 +74,7 @@ These features will add to next version.
   // PROVIDE module b expose a namespace b "a.b", part "a" is duplicate.
   goog.provide("a.b");
   ```
+
+## News
+* [VSCode extension Closure-Namespace-View]() has released, use it quick browse your Closure namespace  
+  <img src=.READMES/1.png>  
