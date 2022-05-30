@@ -76,5 +76,5 @@ These features will add to next version.
   ```
 
 ## News
-* [VSCode extension Closure-Namespace-View]() has released, use it quick browse your Closure namespace  
+* [VSCode extension Closure-Namespace-View](https://github.com/funte/VSCODE-Closure-Namspace-View) has released, use it quickly browse your Closure namespace  
   <img src=.READMES/1.png>  
