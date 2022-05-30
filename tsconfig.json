@@ -8,8 +8,6 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "allowJs": true,
-    "checkJs": false, // Many errors in Webpack, disable this flag.
     "useUnknownInCatchVariables": false,
     "noImplicitAny": false,
     "declaration": true,
