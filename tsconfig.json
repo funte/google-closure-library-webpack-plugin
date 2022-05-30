@@ -12,7 +12,7 @@
     "noImplicitAny": false,
     "declaration": true,
     "rootDir": "src",
-    "outDir": "dist",
+    "outDir": "dist"
   },
   "include": [
     "src/**/*"

@@ -212,7 +212,8 @@ export class ClosureTree {
             // This warning is important, should show it.
             const warning = new BadRequire({
               file: module.request,
-              desc: `detect requre a PROVIDE module but namespace in this module not exposed, but this plugin will fix it`
+              desc: `detect requre a PROVIDE module and the namespace in this module not exposed,` +
+                ` but this plugin will fix it`
             });
             this.warnings.push(warning);
 

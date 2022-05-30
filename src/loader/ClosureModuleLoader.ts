@@ -66,4 +66,4 @@ export = function (
 
   // @ts-ignore
   callback(null, source.source(), source.map(), meta);
-}
+};

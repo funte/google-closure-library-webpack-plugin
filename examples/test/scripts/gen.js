@@ -18,7 +18,7 @@ new Command()
     }
     basefile = pig.pattern.resolvePattern(basefile, process.cwd());
     if (!fs.existsSync(basefile)) {
-      throw new Error(`Cound not find base.js file at "${basefile}".`);
+      throw new Error(`Cannot find base.js file at "${basefile}".`);
     }
 
     // Build the Closure tree.
@@ -29,21 +29,21 @@ new Command()
       sources: (options.sources || []).concat(options.tests || [])
     });
     // Log tree errors.
-    if (tree.errors.length !== 0) {
-      for (const err of tree.errors) {
-        console.log(`Errors: ${err.message.red}`.red);
-        process.exit(1);
+    if (tree.errors.length) {
+      for (let i = 0; i < tree.errors.length; i++) {
+        console.log(`Error(${i}): ${tree.errors[i].message.red}\n`.red);
+        process.exit(tree.errors.length);
       }
     }
     // Log tree warnings.
-    if (tree.warnings.length !== 0) {
-      for (const warning of tree.warnings) {
-        console.log(`Warning: ${warning.message}`.yellow);
+    if (tree.warnings.length) {
+      for (let i = 0; i < tree.warnings.length; i++) {
+        console.log(`Warning(${i}): ${tree.warnings[i].message}\n`.yellow);
       }
+      tree.warnings.length = 0;
     }
-
     // Resolve the output directory.
-    const output = pig.pattern.resolvePattern(options.output, process.cwd())
+    const output = pig.pattern.resolvePattern(options.output, process.cwd());
 
     // To save all HTML unit test files path.
     const htmlfiles = [];

@@ -128,8 +128,8 @@ export class GoogleClosureLibraryWebpackPlugin {
           const module = tree.getModule(WPModule.resource);
           if (!module || !module.isbase) { return; }
           if (!WPModule.presentationalDependencies
-            || WPModule.presentationalDependencies.length == 0
-            || toplevelThisRanges.length == 0
+            || WPModule.presentationalDependencies.length === 0
+            || toplevelThisRanges.length === 0
           ) { return; }
 
           let found = true;
@@ -147,7 +147,7 @@ export class GoogleClosureLibraryWebpackPlugin {
             }
           }
         });
-      }
+      };
       normalModuleFactory.hooks.parser
         .for('javascript/auto')
         .tap(PLUGIN_NAME, parserHandler);
