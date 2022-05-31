@@ -54,7 +54,7 @@ new Command()
           if (!module.source) {
             const error = new Error(`Undefined Closure module source at file ${module.request}.`);
             tree.errors.push(error);
-            console.log(`  ignore ${counts}/${tree.requestToModule.size} source undefined file ${relRequest}`.red);
+            console.log(`  ignore ${counts}/${tree.requestToModule.size} missing file ${relRequest}`.red);
             continue;
           }
           const source = transform({ content: module.source, module, tree, env });
@@ -86,6 +86,12 @@ new Command()
         console.log(`Warning(${i}): ${tree.warnings[i].message}`.yellow);
       }
     }
+
+    console.log(
+      `REMEMBER: the transformed Closure library less test, you must be very careful!!\n`.red +
+      `  1. Must import goog first!!\n`.red +
+      `  2. Import other Closure modules only for side effects!!\n`.red
+    );
   })
   .requiredOption('-o, --output <directory>', 'directory to output the Closure library ES modules')
   .option('-w, --warnings', 'show all warnings')

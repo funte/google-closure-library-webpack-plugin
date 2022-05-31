@@ -5,7 +5,7 @@ Convert Closure library to ES modules and use it with `react`.
   **!!Important!!** As i say its a experiment and the transformed Closure library less test, you must be very careful!!  
   When import the Closure modules, there two ruels must abide:  
   1. Must import goog first!!  
-  2. Import other Closure modules for side effects!!  
+  2. Import other Closure modules only for side effects!!  
   ```import '../closure/closure/goog/string/string';```
 * 🍄The `PatchBasefilePugin` in `webpack.config` shows how remove all `ConstDependency` of toplevel this in base.js presentational dependencies.  
   Why and how remove it, see the source at https://github.com/funte/google-closure-library-webpack-plugin/blob/92613e/src/Plugin.ts#L111  
