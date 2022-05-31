@@ -14,7 +14,7 @@
     "@babel/preset-env": "^7.18.2",
     "@babel/preset-react": "^7.17.12",
     "babel-loader": "^8.2.5",
-    "colors": "^1.4.0",
+    "colors": "1.4.0",
     "commander": "^9.3.0",
     "fs-extra": "^10.1.0",
     "google-closure-library": "^20210406.0.0",
