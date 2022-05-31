@@ -1,5 +1,5 @@
-# react
-Convert Closure library to ES modules and use it with `react`.  
+# exprements.typescript
+Convert Closure library to ES modules and use it in `typescript` with Webpack5(Not support `tsc`, the transformed ES modules seems has many grammar issues in `typescript`).  
 
 To build and run this app with CLI:  
 ```sh

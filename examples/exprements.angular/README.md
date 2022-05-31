@@ -1,5 +1,5 @@
-# react
-Convert Closure library to ES modules and use it with `react`.  
+# exprements.angular
+Convert Closure library to ES modules and use it with `Angular` and Webpack5 in `typescript`.  
 
 To build and run this app with CLI:  
 ```sh

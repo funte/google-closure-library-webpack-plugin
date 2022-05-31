@@ -48,7 +48,7 @@ class PatchBasefilePugin {
             }
           }
         });
-      }
+      };
       normalModuleFactory.hooks.parser
         .for('javascript/auto')
         .tap(PLUGIN_NAME, parserHandler);
@@ -67,7 +67,7 @@ module.exports = {
   devtool: 'cheap-module-source-map',
   entry: {
     bundle: {
-      import: path.resolve(__dirname, './src/index.jsx'),
+      import: path.resolve(__dirname, './src/index.ts'),
       library: {
         name: 'App',
         type: 'umd'
@@ -78,18 +78,15 @@ module.exports = {
     path: path.resolve(__dirname, 'build'),
     globalObject: `(this || self)`
   },
+  resolve: {
+    extensions: ['.ts', '.js']
+  },
   module: {
     rules: [{
-      test: /\.(js|jsx)$/,
-      include: [
-        path.resolve(__dirname, 'src')
-      ],
-      loader: 'babel-loader',
-      options: {
-        babelrc: false,
-        presets: ['@babel/preset-env', '@babel/preset-react']
-      }
-    }, {
+      test: /\.ts$/,
+      use: ['angular2-template-loader', 'ts-loader']
+    },
+    {
       test: /\.html$/,
       use: [{
         loader: "html-loader"
@@ -102,7 +99,7 @@ module.exports = {
       chunks: ['bundle'],
       template: 'src/index.ejs',
       filename: 'index.html',
-      title: 'exprements.react'
+      title: 'exprements.angular'
     })
   ]
 };
