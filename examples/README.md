@@ -14,7 +14,7 @@
 
 You should notice some examples name start with "exprements", these examples use a transformed Closure library that made from the original Closure library, the script [`scripts/gen.js`](./exprements.react/scripts/gen.js) shows how it transforms.  
 Why not direct use the Closre library maybe you will ask. This plugin internal use the Webpack `JavascriptParser` that not support the JSX and TS file, convert Closure library to ES modules is just a makeshift fix, this may change in next version.  
-As i say these examples are experiments and the transformed Closure library less test, you must be very careful, when import the transformed Closure modules, these ruels must abide:  
+As i say these examples are exprements and the transformed Closure library less test, you must be very careful, when import the transformed Closure modules, these ruels must abide:  
   1. Import goog first;  
   2. Import other Closure modules only for side effects;  
   3. Once your project use any transformed Closure module, should not use the goog APIs and original Closure library modules;   

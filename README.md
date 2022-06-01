@@ -74,6 +74,7 @@ These features will add to next version.
   // PROVIDE module b expose a namespace b "a.b", part "a" is duplicate.
   goog.provide("a.b");
   ```
+* `ClosureModuleParserPlugin` support JS/TS/TSX, add more `target` option;  
 
 ## News
 * [VSCode extension Closure-Namespace-View](https://github.com/funte/VSCODE-Closure-Namspace-View) has released, use it quickly browse your Closure namespace  

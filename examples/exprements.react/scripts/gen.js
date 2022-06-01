@@ -91,7 +91,7 @@ new Command()
       `CAUTION!! The transformed Closure library less test, you must be very careful and:\n`.red +
       `  1. Import goog first;\n`.red +
       `  2. Import other Closure modules only for side effects;\n`.red + 
-      `  3. Once your project use any transformed Closure module, should not use the goog APIs and original Closure library modules;\n`
+      `  3. Once your project use any transformed Closure module, should not use the goog APIs and original Closure library modules;\n`.red
     );
   })
   .requiredOption('-o, --output <directory>', 'directory to output the Closure library ES modules')
