@@ -3,6 +3,7 @@ import WebpackError = require('webpack/lib/WebpackError');
 
 import type { SourceLocation } from 'estree';
 
+// export class PluginError extends WebpackError {
 export class PluginError extends WebpackError {
   public readonly name: string = 'GoogleClosureLibraryWebpackPluginError';
 

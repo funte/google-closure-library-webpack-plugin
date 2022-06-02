@@ -949,6 +949,7 @@ describe('Test ClosureModuleParserPlugin', () => {
           `goog.module("foo");\n`
         );
         expect(tree.errors.length).to.equal(1);
+        // @ts-ignore
         expect(tree.errors[0].message.startsWith(
           'goog.module must be first statement at file'
         )).to.true;
@@ -960,6 +961,7 @@ describe('Test ClosureModuleParserPlugin', () => {
           `goog.module("foo");\n`
         );
         expect(tree.errors.length).to.equal(1);
+        // @ts-ignore
         expect(tree.errors[0].message.startsWith(
           'goog.module must be first statement at file'
         )).to.true;
@@ -1306,6 +1308,7 @@ describe('Test ClosureModuleParserPlugin', () => {
           `goog.require("goog");\n`
         );
         expect(tree.errors.length).to.equal(1);
+        // @ts-ignore
         expect(tree.errors[0].message.startsWith(
           `Should not require Closure library namespace goog manually at file`
         )).to.true;
