@@ -1,7 +1,7 @@
 // Its a SCRIPT module which does not contains goog.provide or goog.module.
 
 goog.require('goog.dom');
-// This line be transformed to:
+// This line will be transformed to:
 //  import * as __a__ from "./a.js";
 //  const a = __a__;
 const a = goog.require('a');
