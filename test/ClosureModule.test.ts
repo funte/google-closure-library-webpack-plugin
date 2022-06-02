@@ -11,7 +11,10 @@ import { InvalidNamespaceError } from '../src/errors/InvalidNamespaceError';
 import { NamespaceDuplicateError } from '../src/errors/NamespaceDuplicateError';
 
 describe('Test ClosureModule', () => {
-  const env = new Environment({ context: resolveRequest('fixtures', __dirname) });
+  const env = new Environment({
+    context: resolveRequest('fixtures', __dirname),
+    warningLevel: 'show'
+  });
   const factory = new ClosureModuleFactory();
   const tree = new ClosureTree({
     base: '../../node_modules/google-closure-library/closure/goog/base.js',

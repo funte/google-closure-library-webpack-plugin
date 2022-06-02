@@ -19,7 +19,7 @@
     "test": "yarn run test:lint && yarn run test:all",
     "test:lint": "eslint src --ext ts",
     "test:all": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'test/**/*.ts' -t 120000",
-    "test:one": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'test/ClosureTree.test.ts' -t 60000",
+    "test:one": "env TS_NODE_COMPILER_OPTIONS='{\"module\": \"commonjs\" }' mocha -r ts-node/register 'test/schema.test.ts' -t 60000",
     "updateExampleVersions": "node ./scripts/version.js"
   },
   "dependencies": {

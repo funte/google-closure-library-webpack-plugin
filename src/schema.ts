@@ -29,7 +29,7 @@ export const schema: any = {
         }
       }
     },
-    checkExposed: { type: 'boolean' },
+    warningLevel: { enum: ['show', 'hideLib', 'hideUser', 'hide'] },
     debug: {
       type: 'object',
       properties: {

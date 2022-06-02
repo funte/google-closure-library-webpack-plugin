@@ -15,17 +15,13 @@ describe('Test plugin options', function () {
     }).to.not.throw();
   });
 
-  const err = new BadRequire({
-    file: 'path/to/a',
-    loc: { start: { line: 1, column: 2 }, end: { line: 1, column: 2 } },
-    desc: 'wahaha'
-  });
   it('full options', () => {
     const options = {
       base: 'path/to/base.js',
       sources: ['src'],
       target: 'esm',
       defs: [['name'], ['name', 'vaue'], ['name', true], ['name', 3], ['name', /123/], ['name', () => { }]],
+      warningLevel: 'hideLib',
       debug: {
         logTransformed: true
       }

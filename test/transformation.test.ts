@@ -230,7 +230,10 @@ describe('test transformation', () => {
     });
   });
 
-  const env = new Environment({ context: resolveRequest('fixtures', __dirname) });
+  const env = new Environment({
+    context: resolveRequest('fixtures', __dirname),
+    warningLevel: 'show'
+  });
   const tree = new ClosureTree({
     base: '../../node_modules/google-closure-library/closure/goog/base.js',
     sources: [

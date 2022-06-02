@@ -39,6 +39,8 @@ npm install google-closure-library-webpack-plugin --save-dev
 ### **defs** : *optional array type*
   List of string and value to override the `goog.define` expression, e.g. source `const MSG = goog.define("msg", "Hello World!!");` will be converted to `const MSG = "哈喽啊 树哥!!";` with defs option `defs: [["msg", "哈喽啊 树哥!!"]]`.  
   If the name part is omitted, its value will be true, e.g. source `const FLAG = goog.define("flag", false);` will be converted to `const FLAG = true;` with defs options `defs: [["flag"]]`.  
+### **warningLevel**: *optional "hide", "hideLib", "hideUser" or "hide", defaults to "hideLib"*
+  Warning level, "show" show all warnings, "hidelib" hide warnings in Closure library modules and show warnings in user modules, "hideUser" opposite to WarningLevelOption.hideLib, "hide" hide all warnings, defualts to "hideLib".  
 ### **debug.logTransformed** : *optional boolean type, defaults to false*
   Enable log transformed Closure module to build directory, defaults to false.  
 
@@ -63,18 +65,22 @@ These features will add to next version.
 * More test, test whole Closure library;  
 * Check whether unexposed namespace(except Closure library modules) outside PROVIDE and legacy GOOG module has dot serparator, like this:  
   ```
+  // X: in this GOOG module, namespace "a.b.c" not exposed but has dot separator, should error.
   goog.module("a.b.c");
   ```
-  this module not has exposed namespace but the provided namespace "a.b.c" has dot separator.
 * Check whether unexposed namespce(except Closure library modules) outside PROVIDE and legacy GOOG module duplicate with other exposed namespace, like this:  
   ```
-  // GOOG module a has a unexposed namespace "a".
+  // a.js
+  // In this GOOG module, namespace "a" not exposed.
   goog.module("a");
-  
-  // PROVIDE module b expose a namespace b "a.b", part "a" is duplicate.
+
+  // b.js
+  // X: in this PROVIDE module, namespace "a.b" exposed and will construct a duplicated implicit namespace "a", should error.
   goog.provide("a.b");
   ```
 * `ClosureModuleParserPlugin` support JS/TS/TSX, add more `target` option;  
+* Support soy template?  
+* Parser annotations?  
 
 ## News
 * [VSCode extension Closure-Namespace-View](https://github.com/funte/VSCODE-Closure-Namspace-View) has released, use it quickly browse your Closure namespace  

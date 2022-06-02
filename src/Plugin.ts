@@ -10,6 +10,8 @@ import { PluginError } from "./errors/PluginError";
 
 export type TargetOption = 'esm' | 'commonjs';
 
+export type WarningLevelOption = 'show' | 'hideLib' | 'hideUser' | 'hide';
+
 export interface PluginDebugOptions {
   /** Enable log transformed Closure module to build directory, defaults to false. */
   logTransformed?: boolean;
@@ -24,6 +26,9 @@ export interface PluginOptions {
   target?: TargetOption;
   /** List of string and value to override the goog.define expression, if the name part is omitted, its value will be true. */
   defs?: any[];
+  /** Warning level, "show" show all warnings, "hidelib" hide warnings in Closure library modules and show warnings in user modules, "hideUser" opposite to WarningLevelOption.hideLib, "hide" hide all warnings, defualts to "hideLib". */
+  warningLevel?: WarningLevelOption;
+  /**  */
   debug?: PluginDebugOptions;
 }
 
@@ -49,8 +54,7 @@ export class GoogleClosureLibraryWebpackPlugin {
   }
 
   apply(compiler: any): void {
-    const globalObject = compiler.options.output?.globalObject
-    const logTransformed = this.options.debug?.logTransformed;
+    const globalObject = compiler.options.output?.globalObject;
     if (!compiler.options.context) {
       throw new PluginError(`Undefined compiler context option.`);
     }
@@ -61,7 +65,8 @@ export class GoogleClosureLibraryWebpackPlugin {
       target: this.options.target,
       globalObject,
       defs: this.options.defs,
-      logTransformed
+      warningLevel: this.options.warningLevel,
+      logTransformed: this.options.debug?.logTransformed
     });
 
     const tree = (this as any).tree = new ClosureTree({

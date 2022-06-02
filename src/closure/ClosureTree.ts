@@ -209,14 +209,17 @@ export class ClosureTree {
         }
         if (!module.legacy) {
           if (this.isLibraryModule(module.request)) {
-            // This warning is important, should show it.
-            const warning = new BadRequire({
-              file: module.request,
-              desc: `detect requre a PROVIDE module and the namespace in this module not exposed,` +
-                ` but this plugin will fix it`
-            });
-            this.warnings.push(warning);
+            // Show this Closure library warning if allowed.
+            if (['show', 'hideUser'].includes(this.env.warningLevel)) {
+              const warning = new BadRequire({
+                file: module.request,
+                desc: `detect requre a PROVIDE module and the namespace in this module not exposed,` +
+                  ` but this plugin will fix it`
+              });
+              this.warnings.push(warning);
+            }
 
+            // Set legacy flag and fix it by reprasing implicit namespaces.
             module.legacy = true;
             module.parserImplicities();
           } else {

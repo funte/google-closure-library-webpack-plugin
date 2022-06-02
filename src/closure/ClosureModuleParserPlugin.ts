@@ -4,7 +4,6 @@ import webpack from 'webpack';
 import { DefineParam, DependencyParam, ModuleType, RequireInfo } from './ClosureModule';
 import { PluginError } from '../errors/PluginError';
 import { tap, tapMulti } from '../utils/tap';
-import { travelNamespaceToRoot } from '../utils/travelNamespace';
 
 import { BadRequire } from '../errors/BadRequire';
 import { DeprecateWarning } from '../errors/DeprecateWarning';
@@ -35,7 +34,7 @@ const isFreeVariable = (
   parser: webpack.javascript.JavascriptParser, varName: string
 ): boolean => {
   return !!parser.getFreeInfoFromVariable(varName);
-}
+};
 
 const setModuleType = (module: ClosureModule, type: ModuleType): void => {
   if (module.type === type) return;
@@ -47,7 +46,7 @@ const setModuleType = (module: ClosureModule, type: ModuleType): void => {
     });
   }
   module.type = type;
-}
+};
 
 const PLUGIN_NAME = 'GoogleClosureLibraryWebpackPlugin|ClosureModuleParserPlugin';
 const COMMON_STAGE = -2;
@@ -61,11 +60,18 @@ export class ClosureModuleParserPlugin {
 
   constructor(
     public readonly tree: ClosureTree,
-    public readonly env: Environment,
-    hideLibraryWarnings: boolean = true
+    public readonly env: Environment
   ) {
-    this.shouldShowWarning = request =>
-      !this.tree.isLibraryModule(request) || !hideLibraryWarnings;
+    if (this.env.warningLevel === 'show') {
+      this.shouldShowWarning = () => true;
+    } else if (this.env.warningLevel === 'hide') {
+      this.shouldShowWarning = () => false;
+    } else if (this.env.warningLevel === 'hideUser') {
+      this.shouldShowWarning = request => this.tree.isLibraryModule(request);
+    } else {
+      // Defaults to "hideLib".
+      this.shouldShowWarning = request => !this.tree.isLibraryModule(request);
+    }
   }
 
   private common(parser: webpack.javascript.JavascriptParser): void {

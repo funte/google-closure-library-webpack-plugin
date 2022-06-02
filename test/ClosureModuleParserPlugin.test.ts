@@ -27,7 +27,8 @@ describe('Test ClosureModuleParserPlugin', () => {
     ],
     env: new Environment({
       context: resolveRequest('fixtures', __dirname),
-      globalObject
+      globalObject,
+      warningLevel: 'show'
     })
   });
 
