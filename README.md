@@ -39,8 +39,8 @@ npm install google-closure-library-webpack-plugin --save-dev
 ### **defs** : *optional array type*
   List of string and value to override the `goog.define` expression, e.g. source `const MSG = goog.define("msg", "Hello World!!");` will be converted to `const MSG = "哈喽啊 树哥!!";` with defs option `defs: [["msg", "哈喽啊 树哥!!"]]`.  
   If the name part is omitted, its value will be true, e.g. source `const FLAG = goog.define("flag", false);` will be converted to `const FLAG = true;` with defs options `defs: [["flag"]]`.  
-### **warningLevel**: *optional "hide", "hideLib", "hideUser" or "hide", defaults to "hideLib"*
-  Warning level, "show" show all warnings, "hidelib" hide warnings in Closure library modules and show warnings in user modules, "hideUser" opposite to WarningLevelOption.hideLib, "hide" hide all warnings, defualts to "hideLib".  
+### **warningLevel**: *optional "hide", "hideLib", "hideUser" and "hide", defaults to "hideLib"*
+  "show" show all warnings, "hidelib" hide warnings in Closure library modules and show warnings in user modules, "hideUser" opposite to "hideLib", "hide" hide all warnings, defualts to "hideLib".  
 ### **debug.logTransformed** : *optional boolean type, defaults to false*
   Enable log transformed Closure module to build directory, defaults to false.  
 

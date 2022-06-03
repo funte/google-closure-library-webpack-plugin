@@ -19,7 +19,7 @@ export class Environment {
    * @param options.fs - User provided file system, defaults to fs-extra.
    * @param options.target - Closure module transform target, "esm" or "commonjs", defaults to "esm".
    * @param options.defs - List of string and value to override the goog.define expression, if the name part is omitted, its value will be true.
-   * @param warningLevel - Warning level, "show" show all warnings, "hidelib" hide warnings in Closure library modules and show warnings in user modules, "hideUser" opposite to WarningLevelOption.hideLib, "hide" hide all warnings, defualts to "hideLib".
+   * @param warningLevel - "show" show all warnings, "hidelib" hide warnings in Closure library modules and show warnings in user modules, "hideUser" opposite "hideLib", "hide" hide all warnings, defualts to "hideLib".
    * @param options.logTransformed - Enable log transformed Closure module to build directory, defaults to false.
    */
   constructor(options: {

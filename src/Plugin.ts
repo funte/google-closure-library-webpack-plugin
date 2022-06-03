@@ -26,7 +26,7 @@ export interface PluginOptions {
   target?: TargetOption;
   /** List of string and value to override the goog.define expression, if the name part is omitted, its value will be true. */
   defs?: any[];
-  /** Warning level, "show" show all warnings, "hidelib" hide warnings in Closure library modules and show warnings in user modules, "hideUser" opposite to WarningLevelOption.hideLib, "hide" hide all warnings, defualts to "hideLib". */
+  /** "show" show all warnings, "hidelib" hide warnings in Closure library modules and show warnings in user modules, "hideUser" opposite to "hideLib", "hide" hide all warnings, defualts to "hideLib". */
   warningLevel?: WarningLevelOption;
   /**  */
   debug?: PluginDebugOptions;
