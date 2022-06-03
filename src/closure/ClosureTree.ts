@@ -12,7 +12,7 @@ import { CircularReferenceError } from '../errors/CircularReferenceError';
 import { BadRequire } from '../errors/BadRequire';
 import { NamespaceDuplicateError } from '../errors/NamespaceDuplicateError';
 
-import type { ClosureModule, DependencyParam } from './ClosureModule';
+import { ClosureModule, DependencyParam } from './ClosureModule';
 import type { Environment } from '../Environment';
 
 /** Namespace object that used mange and present namespace structure. */
@@ -208,7 +208,7 @@ export class ClosureTree {
           this.loadModule(module.request);
         }
         if (!module.legacy) {
-          if (this.isLibraryModule(module.request)) {
+          if (this.isLibraryModule(module)) {
             // Show this Closure library warning if allowed.
             if (['show', 'hideUser'].includes(this.env.warningLevel)) {
               const warning = new BadRequire({
@@ -370,15 +370,39 @@ export class ClosureTree {
    * If the request is a library module, return true.
    * @throws {@link PluginError} Throw PluginError if Closure library base.js file not found.
    */
-  isLibraryModule(request: string): boolean {
+  isLibraryModule(arg: string | ClosureModule): boolean {
     if (!this.libpath) {
       throw new PluginError('Could not find Closure library base.js file.');
     }
 
+    let request: string;
+    if (arg instanceof ClosureModule) {
+      request = arg.request;
+    } else if (typeof arg === 'string') {
+      request = arg;
+    } else {
+      return false;
+    }
     return pig.fs.isSubDirectory(
       resolveRequest(request, this.env.context),
       this.libpath
     );
+  }
+
+  /**
+   * If the namespace is a library namespace, return true.
+   * @param namespace - Full namespace, dot-separated sequence of a-z, A-Z, 0-9, _ and $.
+   * @throws {@link PluginError} Throw PluginError if Closure library base.js file not found.
+   */
+  isLibraryNamespace(namespace: string): boolean {
+    let result = false;
+    travelNamespaceFromRoot(namespace, (name, fullname) => {
+      const provider = this._get(fullname);
+      // If not found, return false to stop the travel.
+      if (!provider) { return false; }
+      result = this.isLibraryModule(provider);
+    });
+    return result;
   }
 
   /**
@@ -439,7 +463,7 @@ export class ClosureTree {
    * @throws {@link PluginError} Throw PluginError if Closure library base.js file not found.
    */
   makeDependencies(
-    filter: (module: ClosureModule) => boolean = module => !this.isLibraryModule(module.request),
+    filter: (module: ClosureModule) => boolean = module => !this.isLibraryModule(module),
     base?: string
   ): DependencyParam[] {
     const result: DependencyParam[] = [];

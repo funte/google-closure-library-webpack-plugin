@@ -634,6 +634,37 @@ describe('Test ClosureModuleParserPlugin', () => {
       expect(define.valueType).to.equal('expression');
     });
 
+    it('missing left part', () => {
+      let module: any = undefined;
+      let define: any = undefined;
+
+      tree.clear();
+      module = tree.loadModule('path/to/module',
+        `goog.define("name", true);\n`
+      );
+      expect(tree.errors).to.empty;
+      expect(module).to.exist;
+      define = module.defines.get('name');
+      expect(define).to.exist;
+      expect(define.missingLeft).to.true;
+      expect(tree.warnings.length).to.equal(1);
+      // @ts-ignore
+      expect(tree.warnings[0].message.startsWith(
+        'Left part of the goog.define is missing'
+      )).to.true;
+
+      tree.clear();
+      module = tree.loadModule('path/to/module',
+        // Wired.
+        `something(goog.define("name", true));\n`
+      );
+      expect(tree.errors).to.empty;
+      expect(module).to.exist;
+      define = module.defines.get('name');
+      expect(define).to.exist;
+      expect(define.missingLeft).to.not.true;
+    });
+
     it('test with defs option', () => {
       let olddefs = tree.env.defs;
       (tree.env as any).defs = new Map();

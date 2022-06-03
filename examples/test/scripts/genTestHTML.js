@@ -16,7 +16,7 @@ const pig = require('slim-pig');
  */
 const genTestHTML = (file, output, tree) => {
   const m = /([^\\/]+)\.test\.js$/.exec(file);
-  if (!m || m.length !== 2) return;
+  if (!m || m.length !== 2) { return; }
   const shortname = m[1];
   // Output HTML unit test file path.
   const htmlfile = pig.pattern.resolvePattern(`${shortname}.test.html`, output);
@@ -43,7 +43,7 @@ const genTestHTML = (file, output, tree) => {
       throw new Error(`Could not find module of namespace ${namespace}.`);
     }
     // Filter out the Closure library namespace.
-    if (tree.isLibraryModule(testedModule.request)) { continue; }
+    if (tree.isLibraryModule(testedModule)) { continue; }
     deps.push(tree.makeDependencyParam(testedModule.request));
   }
 
@@ -81,6 +81,6 @@ ${deps.map(dep => lineIndent + dep.text).join(`\n`)}
   console.log(`  gen HTML unit test: ${path.relative(process.cwd(), htmlfile)}`.green);
 
   return htmlfile;
-}
+};
 
 module.exports = genTestHTML;

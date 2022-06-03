@@ -586,6 +586,68 @@ describe('test transformation', () => {
           `goog.DEBUG = false;\n`
         );
       });
+
+      it('missing left part of genenal variable', () => {
+        tree.clear();
+        const module: any = tree.loadModule('path/to/a',
+          // a is general variable, not any namespace.
+          `goog.define("a", false);\n`
+        );
+        expect(tree.errors).to.empty;
+        expect(module).to.exist;
+        const originalSource = new RawSource(module.source);
+        const def = module.defines.get('a');
+        expect(def).to.exist;
+        expect(def.missingLeft).to.true;
+        const trans = new GoogDefineTrans(module, def);
+        const source = generate(originalSource, trans, generateContext);
+        expect(source.source()).to.equal(
+          `a = false;\n`
+        );
+      });
+
+      it('missing left part of non Closure library namespace', () => {
+        tree.clear();
+        const module: any = tree.loadModule('path/to/a',
+          `goog.provide("a");\n` +
+          // a is not Clousre library namespace.
+          `goog.define("a.val", false);\n`
+        );
+        expect(tree.errors).to.empty;
+        expect(module).to.exist;
+        const originalSource = new RawSource(module.source);
+        const def = module.defines.get('a.val');
+        expect(def).to.exist;
+        expect(def.missingLeft).to.true;
+        const trans = new GoogDefineTrans(module, def);
+        const source = generate(originalSource, trans, generateContext);
+        expect(source.source()).to.equal(
+          `goog.provide("a");\n` +
+          // Should add goog.global prefix.
+          `goog.global.a.val = false;\n`
+        );
+      });
+
+      it('missing left part of Clousre library namespce', () => {
+        tree.clear();
+        expect(tree.basefile).to.exist;
+        const module: any = tree.loadModule(tree.basefile as any,
+          // goog is a Closure library namespace.
+          `goog.define("goog.DEBUG", false);\n`
+        );
+        expect(tree.errors).to.empty;
+        expect(module).to.exist;
+        const originalSource = new RawSource(module.source);
+        const def = module.defines.get('goog.DEBUG');
+        expect(def).to.exist;
+        expect(def.missingLeft).to.true;
+        const trans = new GoogDefineTrans(module, def);
+        const source = generate(originalSource, trans, generateContext);
+        expect(source.source()).to.equal(
+          // Should not add the goog.global prefix.
+          `goog.DEBUG = false;\n`
+        );
+      });
     });
   });
 
@@ -656,7 +718,7 @@ describe('test transformation', () => {
         'i'
       ).test(source.source().toString())).to.true;
 
-      expect(tree.errors).to.empty
+      expect(tree.errors).to.empty;
     });
   });
 });

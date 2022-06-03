@@ -23,7 +23,7 @@ export class GoogProvideTrans extends GoogTrans {
     const namespace = this.info.fullname;
     const moduleSource = this.module.source;
     if (!moduleSource) {
-      throw new PluginError(`Undefined Closure module source at file ${this.module.request}.`)
+      throw new PluginError(`Undefined Closure module source at file ${this.module.request}.`);
     }
 
     if (this.info.statement) {
@@ -67,7 +67,7 @@ export class GoogProvideTrans extends GoogTrans {
     }
     // Construct implicit namespaces.
     if (isPROVIDEModule || isLegacyGOOGModule) {
-      const prefix = context.tree.isLibraryModule(this.module.request)
+      const prefix = context.tree.isLibraryModule(this.module)
         ? ''
         : 'goog.global.';
       if (this.info.implicities) {

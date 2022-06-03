@@ -54,6 +54,11 @@ export interface DefineParam {
   value: string;
   /** The defaultValue parameter data type. */
   valueType: 'string' | 'boolean' | 'number' | 'RegExp' | 'function' | 'expression';
+  /** 
+   * Is the left part missing, to compat the google-closure-library@<=20190301.0.0,
+   * e.g. https://github.com/google/closure-library/blob/1488aa237/closure/goog/base.js#L213
+   */
+  missingLeft?: boolean;
 }
 
 /** Dependency param that used to store parsed goog.addDependency parameters. */

@@ -37,7 +37,7 @@ const isFreeVariable = (
 };
 
 const setModuleType = (module: ClosureModule, type: ModuleType): void => {
-  if (module.type === type) return;
+  if (module.type === type) { return; }
   if (module.type !== ModuleType.SCRIPT) {
     throw new MixedModuleTypeError({
       file: module.request,
@@ -56,7 +56,7 @@ const googTag = Symbol(`${PLUGIN_NAME}|googTag`);
 
 /** Plugin to parse Closure module. */
 export class ClosureModuleParserPlugin {
-  private shouldShowWarning: (request: string) => boolean;
+  private shouldShowWarning: (request: string | ClosureModule) => boolean;
 
   constructor(
     public readonly tree: ClosureTree,
@@ -67,10 +67,10 @@ export class ClosureModuleParserPlugin {
     } else if (this.env.warningLevel === 'hide') {
       this.shouldShowWarning = () => false;
     } else if (this.env.warningLevel === 'hideUser') {
-      this.shouldShowWarning = request => this.tree.isLibraryModule(request);
+      this.shouldShowWarning = arg => this.tree.isLibraryModule(arg);
     } else {
       // Defaults to "hideLib".
-      this.shouldShowWarning = request => !this.tree.isLibraryModule(request);
+      this.shouldShowWarning = arg => !this.tree.isLibraryModule(arg);
     }
   }
 
@@ -359,7 +359,7 @@ export class ClosureModuleParserPlugin {
         expr,
         name: evalNameArg.string,
         value: undefined,
-        valueType: undefined,
+        valueType: undefined
       } as any;
       const valueArg = expr.arguments[1];
       // Error if defaultValue parameter missing.
@@ -383,7 +383,7 @@ export class ClosureModuleParserPlugin {
         define.valueType = 'number';
       } else if (evalValueArg?.isRegExp()) {
         // @ts-ignore
-        define.value = evalValueArg.regExp.toString()
+        define.value = evalValueArg.regExp.toString();
         define.valueType = 'RegExp';
       } else if (valueArg.type.endsWith('FunctionExpression')) {
         // @ts-ignore
@@ -399,6 +399,16 @@ export class ClosureModuleParserPlugin {
           param: 'defaultValue',
           desc: 'its must be string, boolean, number, RegExp or function'
         });
+      }
+      const currentStatement = parser.statementPath[parser.statementPath.length - 1];
+      if (currentStatement.type === 'ExpressionStatement'
+        && currentStatement.expression === expr
+      ) {
+        define.missingLeft = true;
+        if (this.shouldShowWarning(module)) {
+          const warning = new PluginError(`Left part of the goog.define is missing, this may cause many error.`);
+          module.warnings.push(warning);
+        }
       }
       module.defines.set(define.name, define);
     });
@@ -432,7 +442,7 @@ export class ClosureModuleParserPlugin {
       const tree = module.tree as ClosureTree;
 
       // Detect by path, in Closure library only has one deps file.
-      if (tree.isLibraryModule(module.request)) {
+      if (tree.isLibraryModule(module)) {
         // @ts-ignore
         if (pig.fs.isSameDirectory(module.request, tree.depsfile)) {
           module.isdeps = true;
@@ -672,7 +682,7 @@ export class ClosureModuleParserPlugin {
       }
       // Warning if calling of deprecated goog.module.declareNamespace.
       if (funcname === 'goog.module.declareNamespace') {
-        if (this.shouldShowWarning(module.request)) {
+        if (this.shouldShowWarning(module)) {
           const warning = new DeprecateWarning({
             file: module.request, loc: expr.loc,
             name: funcname,
@@ -693,7 +703,7 @@ export class ClosureModuleParserPlugin {
         expr,
         statement: currentStatement
       });
-    }
+    };
     // Parse goog.declareModuleId.
     tap(PLUGIN_NAME, hooks.call, 'goog.declareModuleId',
       createHandler('goog.declareModuleId')
@@ -815,7 +825,7 @@ export class ClosureModuleParserPlugin {
       if (declarator.id.name === info.id) {
         info.declaration = statement;
       }
-    })
+    });
   }
 
   private parseProvides(parser: webpack.javascript.JavascriptParser): void {
@@ -861,7 +871,7 @@ export class ClosureModuleParserPlugin {
         parser.tagVariable(namespaceRoot, namespaceTag, namespaceRoot);
       }
 
-      if (this.shouldShowWarning(module.request)) {
+      if (this.shouldShowWarning(module)) {
         const warning = new DeprecateWarning({
           file: module.request, loc: expr.loc,
           name: 'goog.provide',
@@ -979,7 +989,7 @@ export class ClosureModuleParserPlugin {
       } else {
         // In PROVIDE module, use goog.require expression result, should warning.
         if (module.type === ModuleType.PROVIDE) {
-          if (this.shouldShowWarning(module.request)) {
+          if (this.shouldShowWarning(module)) {
             const warning = new BadRequire({
               file: module.request, loc: expr.loc,
               desc: `goog.require always return null in PROVIDE module,` +
@@ -1029,7 +1039,7 @@ export class ClosureModuleParserPlugin {
 
       const namespaceRoot: string = parser.currentTagData;
       const namespace: string = [namespaceRoot].concat(members || []).join('.');
-      if (this.shouldShowWarning(module.request)) {
+      if (this.shouldShowWarning(module)) {
         switch (module.getNamespaceType(namespace).type) {
           case 'require': {
             // Warning if modify required namespace.
@@ -1061,7 +1071,7 @@ export class ClosureModuleParserPlugin {
       const module = parser.state.closure.module as ClosureModule;
 
       // Stop if Closure library module.
-      if (this.tree.isLibraryModule(module.request)) { return; }
+      if (this.tree.isLibraryModule(module)) { return; }
       const namespaceRoot: string = parser.currentTagData;
       // Stop if namespace start with goog.
       if (namespaceRoot === 'goog') { return; }

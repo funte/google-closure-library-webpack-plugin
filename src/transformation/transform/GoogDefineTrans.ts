@@ -27,6 +27,21 @@ export class GoogDefineTrans extends GoogTrans {
     while ([';', '\r', '\n'].includes(this.module.source.charAt(end))) {
       end--;
     }
-    source.replace(start, end, this.define.value);
+    let value = this.define.value;
+    // Repair the missing left part.
+    if (this.define.missingLeft) {
+      let name = this.define.name;
+      const type = this.module.getNamespaceType(this.define.name);
+      // Maybe the name parameter is a namespace.
+      if (type.owner) {
+        const tree: any = this.module.tree;
+        // If not Closure library namespace, add goog.global prefix.
+        if (!tree.isLibraryNamespace(type.owner)) {
+          name = `goog.global.${this.define.name}`;
+        }
+      }
+      value = `${name} = ${this.define.value}`;
+    }
+    source.replace(start, end, value);
   }
 }
