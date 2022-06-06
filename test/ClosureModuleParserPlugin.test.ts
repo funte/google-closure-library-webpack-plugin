@@ -12,7 +12,7 @@ import { InvalidParameterError } from '../src/errors/InvalidParameterError';
 import { MissingParameterError } from '../src/errors/MissingParameterError';
 import { MultiCallingError } from '../src/errors/MultiCallingError';
 import { ModifyImplicitNamespaceWarning } from '../src/errors/ModifyImplicitNamespaceWarning';
-import { ModifyRequiredNamespaceWarning } from '../src/errors/ModifyRequiredNamespaceWarning'
+import { ModifyRequiredNamespaceWarning } from '../src/errors/ModifyRequiredNamespaceWarning';
 import { NamespaceConflictError } from '../src/errors/NamespaceConflictError';
 import { NamespaceOutModuleError } from '../src/errors/NamespaceOutModuleError';
 import { UnexpectCallingError } from '../src/errors/UnexpectCallingError';
@@ -20,6 +20,7 @@ import { UnexpectCallingError } from '../src/errors/UnexpectCallingError';
 describe('Test ClosureModuleParserPlugin', () => {
   const globalObject = 'this || self';
   const tree = new ClosureTree({
+    base: '../../node_modules/google-closure-library/closure/goog/base.js',
     sources: [
       'src',
       // For mock module request.
@@ -49,8 +50,7 @@ describe('Test ClosureModuleParserPlugin', () => {
 
     it('detect by path', () => {
       tree.clear();
-      expect(tree.basefile).to.string;
-      const module: any = tree.loadModule(tree.basefile as any);
+      const module: any = tree.loadModule(tree.basefile);
       expect(tree.errors).to.empty;
       expect(module).to.exist;
       expect(module.isbase).to.true;
@@ -66,9 +66,9 @@ describe('Test ClosureModuleParserPlugin', () => {
       expect(info.id).to.equal('goog');
       expect(info.declaration).to.undefined;
       // Check defines.
-      expect(module.defines.get('COMPILED')?.value).to.equal('true');
-      expect(module.defines.get('goog.global')?.value).to.equal(globalObject);
-      expect(module.defines.get('goog.DEBUG')?.value).to.equal('false');
+      const param = module.defineParams.get('goog.DEBUG')[0];
+      expect(param).to.exist;
+      expect(/\/\*\s+[^]+\*\/false/.test(param.value)).to.true;
     });
   });
 
@@ -391,7 +391,7 @@ describe('Test ClosureModuleParserPlugin', () => {
 
     it('base.js should not use', () => {
       tree.clear();
-      const module: any = tree.loadModule(tree.basefile as any, ``);
+      const module: any = tree.loadModule(tree.basefile, ``);
       expect(tree.errors).to.empty;
       expect(module.isbase).to.true;
       expect(module).to.exist;
@@ -432,221 +432,115 @@ describe('Test ClosureModuleParserPlugin', () => {
   describe('parse goog.define', () => {
     it('string value type', () => {
       let module: any = undefined;
-      let define: any = undefined;
+      let param: any = undefined;
 
+      // Outside Closure library module, should error.
       tree.clear();
       module = tree.loadModule('path/to/module',
         `const name = goog.define("name", "value");\n`
       );
-      expect(tree.errors).to.empty;
-      expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.expr).to.exist;
-      expect(define.name).to.equal('name');
-      expect(define.value).to.equal(`"value"`);
-      expect(define.valueType).to.equal('string');
+      expect(tree.errors).to.not.empty;
+      // @ts-ignore
+      expect(tree.errors[0].message.startsWith(
+        `goog.define disallowed outside Clousre library modules`
+      )).to.true;
 
-      // In base.js file.
       tree.clear();
-      // Mock base.js file.
-      module = tree.loadModule(tree.basefile as any,
+      // Mock Closure library module.
+      module = tree.loadModule(tree.basefile,
         `var goog = {};\n` +
         `const name = goog.define("name", "value");\n`
       );
       expect(tree.errors).to.empty;
       expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.expr).to.exist;
-      expect(define.name).to.equal('name');
-      expect(define.value).to.equal(`"value"`);
-      expect(define.valueType).to.equal('string');
+      param = module.defineParams.get('name')[0];
+      expect(param).to.exist;
+      expect(param.expr).to.exist;
+      expect(param.name).to.equal('name');
+      expect(/\/\*\s+[^]+\*\/"value"/.test(param.value)).to.true;
     });
 
     it('boolean value type', () => {
       let module: any = undefined;
-      let define: any = undefined;
+      let param: any = undefined;
 
       tree.clear();
-      module = tree.loadModule('path/to/module',
-        `const name = goog.define("name", true);\n`
-      );
-      expect(tree.errors).to.empty;
-      expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.expr).to.exist;
-      expect(define.name).to.equal('name');
-      expect(define.value).to.equal('true');
-      expect(define.valueType).to.equal('boolean');
-
-      // In base.js file.
-      tree.clear();
-      // Mock base.js file.
-      module = tree.loadModule(tree.basefile as any,
+      // Mock Closure library module.
+      module = tree.loadModule(tree.basefile,
         `var goog = {};\n` +
         `const name = goog.define("name", true);\n`
       );
       expect(tree.errors).to.empty;
       expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.expr).to.exist;
-      expect(define.name).to.equal('name');
-      expect(define.value).to.equal('true');
-      expect(define.valueType).to.equal('boolean');
+      param = module.defineParams.get('name')[0];
+      expect(param).to.exist;
+      expect(param.expr).to.exist;
+      expect(param.name).to.equal('name');
+      expect(/\/\*\s+[^]+\*\/true/.test(param.value)).to.true;
     });
 
     it('number value type', () => {
-      let module: any = undefined;
-      let define: any = undefined;
-
       tree.clear();
-      module = tree.loadModule('path/to/module',
-        `const name = goog.define("name", 3);\n`
-      );
-      expect(tree.errors).to.empty;
-      expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.expr).to.exist;
-      expect(define.name).to.equal('name');
-      expect(define.value).to.equal('3');
-      expect(define.valueType).to.equal('number');
-
-      // In base.js file.
-      tree.clear();
-      // Mock base.js file.
-      module = tree.loadModule(tree.basefile as any,
+      // Mock Closure library module.
+      const module: any = tree.loadModule(tree.basefile,
         `var goog = {};\n` +
         `const name = goog.define("name", 3);\n`
       );
       expect(tree.errors).to.empty;
       expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.expr).to.exist;
-      expect(define.name).to.equal('name');
-      expect(define.value).to.equal('3');
-      expect(define.valueType).to.equal('number');
+      const param: any = module.defineParams.get('name')[0];
+      expect(param).to.exist;
+      expect(param.expr).to.exist;
+      expect(param.name).to.equal('name');
+      expect(/\/\*\s+[^]+\*\/3/.test(param.value)).to.true;
     });
 
     it('RegExp value type', () => {
-      let module: any = undefined;
-      let define: any = undefined;
-
       tree.clear();
-      module = tree.loadModule('path/to/module',
-        `const name = goog.define("name", /123/);\n`
-      );
-      expect(tree.errors).to.empty;
-      expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.expr).to.exist;
-      expect(define.name).to.equal('name');
-      expect(define.value).to.equal('/123/');
-      expect(define.valueType).to.equal('RegExp');
-
-      // In base.js file.
-      tree.clear();
-      // Mock base.js file.
-      module = tree.loadModule(tree.basefile as any,
+      // Mock Closure library module.
+      const module: any = tree.loadModule(tree.basefile,
         `var goog = {};\n` +
         `const name = goog.define("name", /123/);\n`
       );
       expect(tree.errors).to.empty;
       expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.expr).to.exist;
-      expect(define.name).to.equal('name');
-      expect(define.value).to.equal('/123/');
-      expect(define.valueType).to.equal('RegExp');
-    });
-
-    it('function value type', () => {
-      let module: any = undefined;
-      let define: any = undefined;
-
-      tree.clear();
-      module = tree.loadModule('path/to/module',
-        `const name = goog.define("name", function(){});\n`
-      );
-      expect(tree.errors).to.empty;
-      expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.expr).to.exist;
-      expect(define.name).to.equal('name');
-      expect(define.value).to.equal('function(){}');
-      expect(define.valueType).to.equal('function');
-
-      // In base.js file.
-      tree.clear();
-      // Mock base.js file.
-      module = tree.loadModule(tree.basefile as any,
-        `var goog = {};\n` +
-        `const name = goog.define("name", function(){});\n`
-      );
-      expect(tree.errors).to.empty;
-      expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.expr).to.exist;
-      expect(define.name).to.equal('name');
-      expect(define.value).to.equal('function(){}');
-      expect(define.valueType).to.equal('function');
+      const param: any = module.defineParams.get('name')[0];
+      expect(param).to.exist;
+      expect(param.expr).to.exist;
+      expect(param.name).to.equal('name');
+      expect(/\/\*\s+[^]+\*\/\/123\//.test(param.value)).to.true;
     });
 
     it('expression value type', () => {
-      let module: any = undefined;
-      let define: any = undefined;
-
       tree.clear();
-      module = tree.loadModule('path/to/module',
-        `const name = goog.define("name", a || b);\n`
-      );
-      expect(tree.errors).to.empty;
-      expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.expr).to.exist;
-      expect(define.name).to.equal('name');
-      expect(define.value).to.equal('a || b');
-      expect(define.valueType).to.equal('expression');
-
-      // In base.js file.
-      tree.clear();
-      // Mock base.js file.
-      module = tree.loadModule(tree.basefile as any,
+      // Mock Closure library module.
+      const module: any = tree.loadModule(tree.basefile,
         `var goog = {};\n` +
         `const name = goog.define("name", a || b);\n`
       );
       expect(tree.errors).to.empty;
       expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.expr).to.exist;
-      expect(define.name).to.equal('name');
-      expect(define.value).to.equal('a || b');
-      expect(define.valueType).to.equal('expression');
+      const param: any = module.defineParams.get('name')[0];
+      expect(param).to.exist;
+      expect(param.expr).to.exist;
+      expect(param.name).to.equal('name');
+      expect(/\/\*\s+[^]+\*\/a || b/.test(param.value)).to.true;
     });
 
     it('missing left part', () => {
       let module: any = undefined;
-      let define: any = undefined;
+      let param: any = undefined;
 
       tree.clear();
-      module = tree.loadModule('path/to/module',
+      // Mock Closure library module.
+      module = tree.loadModule(tree.basefile,
         `goog.define("name", true);\n`
       );
       expect(tree.errors).to.empty;
       expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.missingLeft).to.true;
+      param = module.defineParams.get('name')[0];
+      expect(param).to.exist;
+      expect(param.missingLeft).to.true;
       expect(tree.warnings.length).to.equal(1);
       // @ts-ignore
       expect(tree.warnings[0].message.startsWith(
@@ -654,67 +548,45 @@ describe('Test ClosureModuleParserPlugin', () => {
       )).to.true;
 
       tree.clear();
-      module = tree.loadModule('path/to/module',
+      // Mock Closure library module.
+      module = tree.loadModule(tree.basefile,
         // Wired.
         `something(goog.define("name", true));\n`
       );
       expect(tree.errors).to.empty;
       expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.missingLeft).to.not.true;
+      param = module.defineParams.get('name');
+      expect(param).to.exist;
+      expect(param.missingLeft).to.not.true;
     });
 
     it('test with defs option', () => {
-      let olddefs = tree.env.defs;
-      (tree.env as any).defs = new Map();
-      (tree.env as any).defs.set('name', 'false');
-      (tree.env as any).defs.set('COMPILED', 'false');
-      (tree.env as any).defs.set('goog.DEBUG', 'true');
-
-      let module: any = undefined;
-      let define: any = undefined;
+      let oldDefines = tree.env.defines;
+      (tree.env as any).defines = new Map();
+      (tree.env as any).defines.set('name', 'false');
 
       tree.clear();
-      module = tree.loadModule('path/to/module',
+      // Mock Closure library module.
+      const module: any = tree.loadModule(tree.basefile,
         `const name = goog.define("name", true);\n`
       );
       expect(tree.errors).to.empty;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.value).to.equal('false');
-
-      // In base.js file.
-      tree.clear();
-      // Mock base.js file.
-      module = tree.loadModule(tree.basefile as any,
-        `const name = goog.define("name", true);\n` +
-        `var COMPILED = false;\n` +
-        `goog.DEBUG = goog.define("goog.DEBUG", true);\n`
-      );
-      expect(tree.errors).to.empty;
       expect(module).to.exist;
-      define = module.defines.get('name');
-      expect(define).to.exist;
-      expect(define.value).to.equal('false');
-      // COMPILED force to true.
-      define = module.defines.get('COMPILED');
-      expect(define).to.exist;
-      expect(define.value).to.equal('true');
-      // goog.DEBUG forece to false.
-      define = module.defines.get('goog.DEBUG');
-      expect(define).to.exist;
-      expect(define.value).to.equal('false');
+      const param: any = module.defineParams.get('name')[0];
+      expect(param).to.string;
+      expect(/\/\*\s+[^]+\*\/false/.test(param.value)).to.true;
 
-      (tree.env as any).defs = olddefs;
+      (tree.env as any).defines = oldDefines;
     });
+
+    // TODO: different value should error.
   });
 
   describe('parse dependencies file', () => {
     describe('detect dependencies file', () => {
       it('detect by path', () => {
         tree.clear();
-        const module: any = tree.loadModule(tree.depsfile as any, ``);
+        const module: any = tree.loadModule(tree.depsfile, ``);
         expect(module.errors).to.empty;
         expect(module).to.exist;
         expect(module.isdeps).to.true;

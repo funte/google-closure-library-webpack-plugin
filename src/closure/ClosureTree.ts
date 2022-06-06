@@ -3,6 +3,7 @@ import pig from 'slim-pig';
 
 import { ClosureModuleFactory } from './ClosureModuleFactory';
 import { instanceOfDependencyParam, ModuleState, ModuleType } from './ClosureModule';
+import { existsSync } from '../utils/exists';
 import { PluginError } from '../errors/PluginError';
 import { resolveRequest } from '../utils/resolveRequest';
 import { MatchState, Sources } from '../source/Sources';
@@ -36,10 +37,10 @@ export class ClosureTree {
 
   public readonly env: Environment;
 
-  public readonly libpath: string | undefined;
-  public readonly googpath: string | undefined;
-  public readonly basefile: string | undefined;
-  public readonly depsfile: string | undefined;
+  public readonly libpath: string;
+  public readonly googpath: string;
+  public readonly basefile: string;
+  public readonly depsfile: string;
 
   public readonly namespaceToRequest: Map<string, string> = new Map();
   public readonly requestToModule: Map<string, ClosureModule> = new Map();
@@ -69,20 +70,25 @@ export class ClosureTree {
 
     if (typeof base === 'string') {
       this.basefile = resolveRequest(base, env.context);
-    } else if (typeof env.NODE_MODULES === 'string') {
-      this.basefile = resolveRequest(
-        'google-closure-library/closure/goog/base.js',
-        env.NODE_MODULES);
     } else {
-      this.warnings.push(
-        new PluginError('Could not find Closure library base.js file.')
-      );
+      let libpath = resolveRequest('node_modules/google-closure-library', this.env.context);
+      if (!existsSync(libpath, this.env.fs)) {
+        throw new PluginError('Cannot find Closure library base.js file.');
+      }
+      const lstatSync = this.env.fs.lstatSync || this.env.fs.statSync;
+      // Get the real library location.
+      while (lstatSync(libpath).isSymbolicLink()) {
+        libpath = this.env.fs.readlinkSync(libpath);
+      }
+      this.basefile = resolveRequest('closure/goog/base.js', libpath);
+      if (!existsSync(this.basefile, this.env.fs)) {
+        throw new PluginError('Cannot find Closure library base.js file.');
+      }
     }
-    if (typeof this.basefile === 'string') {
-      this.googpath = path.dirname(this.basefile);
-      this.libpath = resolveRequest('../../', this.googpath);
-      this.depsfile = this.googpath + path.sep + 'deps.js';
-    }
+    this.googpath = path.dirname(this.basefile);
+    this.libpath = resolveRequest('../../', this.googpath);
+    this.depsfile = this.googpath + path.sep + 'deps.js';
+
     // Add Closure library deps.js to sources.
     // Cache library modules from deps file more quick than scanning the whole directory.
     if (typeof this.depsfile === 'string') {
@@ -298,7 +304,7 @@ export class ClosureTree {
   private _get(arg: string): ClosureModule | null {
     if (typeof arg !== 'string') { return null; }
 
-    let request = this.namespaceToRequest.get(arg)
+    let request = this.namespaceToRequest.get(arg);
     if (request === undefined) {
       request = resolveRequest(arg, this.env.context);
     }
@@ -516,7 +522,7 @@ export class ClosureTree {
       `[${param.provides.map(namespace => `"${namespace}"`).join(', ')}], ` +
       `[${param.requires.map(namespace => `"${namespace}"`).join(', ')}], ` +
       `${(flags.length > 0) ? `{ ${flags.join(', ')} }` : '{}'}` +
-      `);`
+      `);`;
     return param;
   }
 

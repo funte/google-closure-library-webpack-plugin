@@ -17,6 +17,7 @@ import type {
   SourceLocation,
   Statement as StatementNode
 } from 'estree';
+import type { GoogTrans } from '../transformation/transform/GoogTrans';
 
 export enum ModuleState {
   UNLOAD = 0,
@@ -50,10 +51,8 @@ export interface DefineParam {
   expr: ExpressionNode;
   /** The name parameter. */
   name: string;
-  /** The defaultValue parameter. */
+  /** The stringfied defaultValue parameter. */
   value: string;
-  /** The defaultValue parameter data type. */
-  valueType: 'string' | 'boolean' | 'number' | 'RegExp' | 'function' | 'expression';
   /** 
    * Is the left part missing, to compat the google-closure-library@<=20190301.0.0,
    * e.g. https://github.com/google/closure-library/blob/1488aa237/closure/goog/base.js#L213
@@ -187,7 +186,10 @@ export class ClosureModule {
   public namespaceUsages: Map<string, ExpressionNode[]> = new Map();
   /** Cache of namespace types. */
   public namespaceTypes: Map<string, NamespaceType> = new Map();
-  public defines: Map<string, DefineParam> = new Map();
+  /** Parsed goog.define parameters in this module. */
+  public defineParams: Map<string, DefineParam[]> = new Map();
+  /** Some GoogTrans ready to apply. */
+  public trans: GoogTrans[] = [];
 
   /** Errors when parsing. */
   public errors: PluginError[] = [];
@@ -205,10 +207,12 @@ export class ClosureModule {
   }) {
     const { request, tree, env, parser } = options;
 
-    if (typeof request !== 'string')
+    if (typeof request !== 'string') {
       throw new Error('Request must be string.');
-    if (pig.pattern.isGlob(request))
+    }
+    if (pig.pattern.isGlob(request)) {
       throw new Error(`Request "${request}" must be non glob.`);
+    }
 
     this.tree = tree;
     this.env = env;
@@ -368,7 +372,7 @@ export class ClosureModule {
     arg: string | Buffer | DependencyParam | null | undefined
   ): void {
     if (instanceOfDependencyParam(arg)) {
-      if (this.state >= ModuleState.CACHE) return;
+      if (this.state >= ModuleState.CACHE) { return; }
       this._unload();
 
       try {
@@ -518,7 +522,8 @@ export class ClosureModule {
     this.requires.clear();
     this.namespaceUsages.clear();
     this.namespaceTypes.clear();
-    this.defines.clear();
+    this.defineParams.clear();
+    this.trans.length = 0;
   }
 
   unload(): void {

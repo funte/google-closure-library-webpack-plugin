@@ -10,6 +10,8 @@ import { PluginError } from "./errors/PluginError";
 
 export type TargetOption = 'esm' | 'commonjs';
 
+export type DefineValueType = string | boolean | number;
+
 export type WarningLevelOption = 'show' | 'hideLib' | 'hideUser' | 'hide';
 
 export interface PluginDebugOptions {
@@ -24,8 +26,11 @@ export interface PluginOptions {
   sources: string | string[];
   /** Closure module transform target, "esm" or "commonjs", defaults to "esm". */
   target?: TargetOption;
-  /** List of string and value to override the goog.define expression, if the name part is omitted, its value will be true. */
-  defs?: any[];
+  /** 
+   * List of string and value to override the goog.define expression, if the name part is omitted, its value will be true.  
+   * The value could be string, boolean and number.  
+   */
+  defs?: (string | [string] | [string, DefineValueType])[];
   /** "show" show all warnings, "hidelib" hide warnings in Closure library modules and show warnings in user modules, "hideUser" opposite to "hideLib", "hide" hide all warnings, defualts to "hideLib". */
   warningLevel?: WarningLevelOption;
   /**  */
@@ -64,7 +69,7 @@ export class GoogleClosureLibraryWebpackPlugin {
       fs: compiler.inputFileSystem,
       target: this.options.target,
       globalObject,
-      defs: this.options.defs,
+      defines: this.options.defs,
       warningLevel: this.options.warningLevel,
       logTransformed: this.options.debug?.logTransformed
     });

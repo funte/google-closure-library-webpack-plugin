@@ -400,7 +400,7 @@ describe('Test ClosureModule', () => {
       expect(module.requires).to.empty;
       expect(module.namespaceUsages).to.empty;
       expect(module.namespaceTypes).to.empty;
-      expect(module.defines).to.empty;
+      expect(module.defineParams).to.empty;
     });
   });
 });

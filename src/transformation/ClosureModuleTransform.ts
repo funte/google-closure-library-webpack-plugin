@@ -48,10 +48,13 @@ function createTransforms(module: ClosureModule): GoogTrans[] {
   }
 
   // Process goog.define.
-  for (const [, define] of module.defines.entries()) {
-    trans.push(new GoogDefineTrans(module, define));
+  for (const defines of module.defineParams.values()) {
+    for (const define of defines) {
+      trans.push(new GoogDefineTrans(module, define));
+    }
   }
-  return trans;
+
+  return trans.concat(module.trans);
 }
 
 /** Tranform Closure module to ES or CommonJS module. */

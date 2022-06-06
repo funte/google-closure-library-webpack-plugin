@@ -30,31 +30,32 @@ npm install google-closure-library-webpack-plugin --save-dev
 
 ## Options
 ### **base** : *optional string type, defaults to `node_modules/google-closure-library/closure/goog/base.js`*
-  Path to Closure library `base.js` file, must be absolute or relative from the Webpack [context](https://webpack.js.org/configuration/entry-context/#context).  
+Path to Closure library `base.js` file, must be absolute or relative from the Webpack [context](https://webpack.js.org/configuration/entry-context/#context).  
 ### **sources** : *required string or array type*
-  List of absolute patterns, or relative from the Webpack [context](https://webpack.js.org/configuration/entry-context/#context). You can use the negative patterns(start with `!`) ignore files or directories.  
-  Supported glob features see [minimatch#features](https://github.com/isaacs/minimatch#features).  
+List of absolute patterns, or relative from the Webpack [context](https://webpack.js.org/configuration/entry-context/#context). You can use the negative patterns(start with `!`) ignore files or directories.  
+Supported glob features see [minimatch#features](https://github.com/isaacs/minimatch#features).  
 ### **target** : *optional "esm" or "commonjs", defaults to "esm"*
-  Closure module transform target, "esm" or "commonjs", defaults to "esm".  
+Closure module transform target, "esm" or "commonjs", defaults to "esm".  
 ### **defs** : *optional array type*
-  List of string and value to override the `goog.define` expression, e.g. source `const MSG = goog.define("msg", "Hello World!!");` will be converted to `const MSG = "哈喽啊 树哥!!";` with defs option `defs: [["msg", "哈喽啊 树哥!!"]]`.  
-  If the name part is omitted, its value will be true, e.g. source `const FLAG = goog.define("flag", false);` will be converted to `const FLAG = true;` with defs options `defs: [["flag"]]`.  
+List of string and value to override the `goog.define` expression in Closure library, e.g. source `goog.LOCALE = goog.define('goog.LOCALE', 'en');` will be converted to `goog.LOCALE = 'zh';` with defs option `defs: [["goog.LOCALE", "zh"]]`.  
+If the value part is omitted, its value will be true, the value could be string, boolean and number.  
+*Because limited with my programming skills, i cannot make the `defaultValue` parameter support more data types, so this functionality will be disallowed outside Closure library modules, but you can still use this option overwrite the `goog.*` names, recommend the same functionality Webpack [DefinePlugin](https://webpack.js.org/plugins/define-plugin/).*  
 ### **warningLevel**: *optional "hide", "hideLib", "hideUser" and "hide", defaults to "hideLib"*
-  "show" show all warnings, "hidelib" hide warnings in Closure library modules and show warnings in user modules, "hideUser" opposite to "hideLib", "hide" hide all warnings, defualts to "hideLib".  
+"show" show all warnings, "hidelib" hide warnings in Closure library modules and show warnings in user modules, "hideUser" opposite to "hideLib", "hide" hide all warnings, defualts to "hideLib".  
 ### **debug.logTransformed** : *optional boolean type, defaults to false*
-  Enable log transformed Closure module to build directory, defaults to false.  
+Enable log transformed Closure module to build directory, defaults to false.  
 
 ## Something important
 ### 💊Speedup the Webpack building process with deps file
-  Everytime when start the building process by the [Webpack build command](https://webpack.js.org/api/cli/#build), this plugin will search and parse all files found in the `sources` options. Obviously, it's very expensive and unnecessary, but if you specific a deps file like the `deps.js` in Closure library, this plugin will make a quick through and skip the parsing work until its requied by the `goog.require` statement.  
-  How speedup building process with deps file, see example [deps](./examples/deps/README.md).  
+Everytime when start the building process by the [Webpack build command](https://webpack.js.org/api/cli/#build), this plugin will search and parse all files found in the `sources` options. Obviously, it's very expensive and unnecessary, but if you specific a deps file like the `deps.js` in Closure library, this plugin will make a quick through and skip the parsing work until its requied by the `goog.require` statement.  
+How speedup building process with deps file, see example [deps](./examples/deps/README.md).  
 ### 💊How test your code, is the `goog.testing` still work?
-  No, but you can still use it with `goog.addDependency` load and execute JsUnit tests in an unbundled, uncompiled browser environment, see example [test](./examples/test/README.md).  
+No, but you can still use it with `goog.addDependency` load and execute JsUnit tests in an unbundled, uncompiled browser environment, see example [test](./examples/test/README.md).  
   Also you can directly test the Webpack bundle file with `mocha` and other tools.  
 ### 💊Influenced symbols in compiled base.js file
-  + `COMPILED` force to `true`;  
-  + `goog.DEBUG` force to `false`;  
-  + Replace `goog.global` with [options.output.globalObject](https://webpack.js.org/configuration/output/#outputglobalobject);  
++ `COMPILED` will be stripped and replaced with constant `true`, e.g. this code `if(!COMPILED) { }` will be converted to `if(!true) { }`;  
++ `goog.DEBUG` defaults to `false`;  
++ Replace `goog.global` with [options.output.globalObject](https://webpack.js.org/configuration/output/#outputglobalobject);  
 
 ## Error case
 TODO: add error case.

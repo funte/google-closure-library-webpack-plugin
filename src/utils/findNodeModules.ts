@@ -6,6 +6,7 @@ import path from 'path';
  * @param pattern - Absolute pattern to start search, defaults to current directory.
  * @param fs - User provided file system, defaults to fs-extra.
  * @returns Return null if not found.
+ * @deprecated
  */
 export function findNodeModules(pattern: string, fs: any = _fs): string | null {
   if (typeof pattern !== 'string' || pattern === '') {

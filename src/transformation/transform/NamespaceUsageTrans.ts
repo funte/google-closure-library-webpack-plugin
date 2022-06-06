@@ -18,7 +18,7 @@ export class NamespaceUsageTrans extends GoogTrans {
       if (!expr.range) {
         throw new PluginError(`Undefined expresson range property of namespace ${this.namespace} usage.`);
       }
-      source.insert(expr.range[0], `/** use namespace ${this.namespace} */goog.global.`);
+      source.insert(expr.range[0], `/* use namespace ${this.namespace} */goog.global.`);
     }
   }
 }

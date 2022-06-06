@@ -75,7 +75,7 @@ export class GoogProvideTrans extends GoogTrans {
           implicitNamespace = `${prefix}${implicitNamespace}`;
           // Implicit namespace maybe intialized in required module, its must be 
           // checked first.
-          chunks.push(`/** construct implicit namespace ${implicitNamespace} */${implicitNamespace} = ${implicitNamespace} || {};\n`);
+          chunks.push(`/* construct implicit namespace ${implicitNamespace} */${implicitNamespace} = ${implicitNamespace} || {};\n`);
         }
       }
       // Construct provided namespace.
@@ -86,7 +86,7 @@ export class GoogProvideTrans extends GoogTrans {
         // with other construct namespace statements. 
         // So, the provided namespace must be intialized like the implicit namespace.
         // chunk.push(`/** construct provided ${_namespace} */${_namespace} = {};\n`);
-        chunks.push(`/** construct provided namespace ${providedNamespace} */${providedNamespace} = ${providedNamespace} || {};\n`);
+        chunks.push(`/* construct provided namespace ${providedNamespace} */${providedNamespace} = ${providedNamespace} || {};\n`);
       } else if (isLegacyGOOGModule) {
         endChunks.push(`${providedNamespace} = ${this.info.id};\n`);
       }

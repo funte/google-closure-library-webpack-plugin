@@ -8,15 +8,15 @@ import { PluginError } from '../../errors/PluginError';
 export class GoogDefineTrans extends GoogTrans {
   constructor(
     public readonly module: ClosureModule,
-    public readonly define: DefineParam
+    public readonly param: DefineParam
   ) {
     super();
   }
 
   apply(source: ReplaceSource, context: GenerateContext): void {
-    const expr = this.define.expr;
+    const expr = this.param.expr;
     if (!expr.range) {
-      throw new PluginError(`Undefined expression range property of define ${this.define.name}.`);
+      throw new PluginError(`Undefined expression range property of define ${this.param.name}.`);
     }
     const start = expr.range[0];
     // Not include the semicolon or LF character.
@@ -27,20 +27,20 @@ export class GoogDefineTrans extends GoogTrans {
     while ([';', '\r', '\n'].includes(this.module.source.charAt(end))) {
       end--;
     }
-    let value = this.define.value;
+    let value = this.param.value;
     // Repair the missing left part.
-    if (this.define.missingLeft) {
-      let name = this.define.name;
-      const type = this.module.getNamespaceType(this.define.name);
+    if (this.param.missingLeft) {
+      let name = this.param.name;
+      const type = this.module.getNamespaceType(this.param.name);
       // Maybe the name parameter is a namespace.
       if (type.owner) {
         const tree: any = this.module.tree;
         // If not Closure library namespace, add goog.global prefix.
         if (!tree.isLibraryNamespace(type.owner)) {
-          name = `goog.global.${this.define.name}`;
+          name = `goog.global.${this.param.name}`;
         }
       }
-      value = `${name} = ${this.define.value}`;
+      value = `${name} = ${this.param.value}`;
     }
     source.replace(start, end, value);
   }

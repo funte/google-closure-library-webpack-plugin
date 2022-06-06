@@ -1,5 +1,6 @@
 'use strict';
 
+import { parse as acornParse } from 'acorn';
 import { expect } from "chai";
 import fs from 'fs';
 import fsExtra from 'fs-extra';
@@ -11,19 +12,11 @@ const isWin32 = os.platform() === 'win32';
 import path from 'path';
 
 import { exists, existsSync } from '../src/utils/exists';
-import { findNodeModules } from '../src/utils/findNodeModules';
 import { readJson, readJsonSync } from '../src/utils/readJson';
 import { resolveRequest } from '../src/utils/resolveRequest';
+import { simpleWalkSync } from '../src/utils/simpleWalk';
 
 describe('Test utils', () => {
-  it('test findNodeModules', () => {
-    expect(findNodeModules(
-      path.resolve(__dirname, './fixtures/src/index.js')
-    )).to.equal(
-      path.resolve(__dirname, './fixtures/node_modules')
-    );
-  });
-
   it('test resolveRequest', () => {
     if (isWin32) {
       expect(resolveRequest('D:\\')).to.equal('d:/');
@@ -31,6 +24,34 @@ describe('Test utils', () => {
       expect(resolveRequest('a', 'D:/')).to.equal('d:/a');
       expect(resolveRequest('!a', 'D:/')).to.equal('!d:/a');
     }
+  });
+
+  describe('test simpleWalk', () => {
+    it('test simpleWalkSync', () => {
+      const ast: any = acornParse('var goog = {};\n', { ecmaVersion: 'latest' });
+      expect(ast).to.exist;
+      const allnodes: any[] = [];
+
+      allnodes.length = 0;
+      simpleWalkSync(ast, (child, parent, prop): any => {
+        allnodes.push(child);
+      });
+      expect(allnodes.length).to.equal(5);
+
+      allnodes.length = 0;
+      simpleWalkSync(ast, (child, parent, prop): any => {
+        allnodes.push(child);
+        if (child.type === 'VariableDeclaration') { return 'done'; }
+      });
+      expect(allnodes.length).to.equal(2);
+
+      allnodes.length = 0;
+      simpleWalkSync(ast, (child, parent, prop): any => {
+        allnodes.push(child);
+        if (child.type === 'VariableDeclaration') { return 'skip'; }
+      });
+      expect(allnodes.length).to.equal(2);
+    });
   });
 
   const jsonFile = path.resolve(__dirname, 'fixtures/foo.json');
@@ -57,7 +78,7 @@ describe('Test utils', () => {
         expect(json.val).to.equal(1);
       });
     });
-  }
+  };
 
   // Test Nodejs fs module.
   helper_testWithFileSystem('test Nodejs fs module', fs);

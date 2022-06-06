@@ -444,10 +444,10 @@ describe('test transformation', () => {
         const trans2 = new GoogProvideTrans(module, info2);
         const source = generate(originalSource, [trans1, trans2], generateContext);
         expect(source.source()).to.equal(
-          `/** construct implicit namespace goog.global.a */goog.global.a = goog.global.a || {};\n` +
-          `/** construct provided namespace goog.global.a.b */goog.global.a.b = goog.global.a.b || {};\n` +
-          `/** construct implicit namespace goog.global.a.b.c */goog.global.a.b.c = goog.global.a.b.c || {};\n` +
-          `/** construct provided namespace goog.global.a.b.c.d */goog.global.a.b.c.d = goog.global.a.b.c.d || {};\n`
+          `/* construct implicit namespace goog.global.a */goog.global.a = goog.global.a || {};\n` +
+          `/* construct provided namespace goog.global.a.b */goog.global.a.b = goog.global.a.b || {};\n` +
+          `/* construct implicit namespace goog.global.a.b.c */goog.global.a.b.c = goog.global.a.b.c || {};\n` +
+          `/* construct provided namespace goog.global.a.b.c.d */goog.global.a.b.c.d = goog.global.a.b.c.d || {};\n`
         );
       });
 
@@ -475,10 +475,10 @@ describe('test transformation', () => {
         expect(trans2.info).to.exist;
         const source = generate(originalSource, [trans1, trans2], generateContext);
         expect(source.source()).to.equal(
-          `/** construct implicit namespace a */a = a || {};\n` +
-          `/** construct provided namespace a.b */a.b = a.b || {};\n` +
-          `/** construct implicit namespace a.b.c */a.b.c = a.b.c || {};\n` +
-          `/** construct provided namespace a.b.c.d */a.b.c.d = a.b.c.d || {};\n`
+          `/* construct implicit namespace a */a = a || {};\n` +
+          `/* construct provided namespace a.b */a.b = a.b || {};\n` +
+          `/* construct implicit namespace a.b.c */a.b.c = a.b.c || {};\n` +
+          `/* construct provided namespace a.b.c.d */a.b.c.d = a.b.c.d || {};\n`
         );
       });
 
@@ -557,7 +557,7 @@ describe('test transformation', () => {
         const source = generate(originalSource, trans, generateContext);
         expect(source.source()).to.equal(
           `var exports = {};\n` +
-          `/** construct implicit namespace goog.global.a */goog.global.a = goog.global.a || {};\n` +
+          `/* construct implicit namespace goog.global.a */goog.global.a = goog.global.a || {};\n` +
           `goog.global.a.b = exports;\n` +
           `export default exports;\n`
         );
@@ -565,66 +565,43 @@ describe('test transformation', () => {
     });
 
     describe('test GoogDefineTrans', () => {
-      it('goog.define in Closure library base.js file', () => {
+      it('COMPILED and goog.define in Closure library base.js file', () => {
         tree.clear();
         expect(tree.basefile).to.exist;
         const module: any = tree.loadModule(tree.basefile as any,
           `var COMPILED = false;\n` +
-          `goog.DEBUG = goog.define("goog.DEBUG", true);\n`
+          `goog.DEBUG = goog.define("goog.DEBUG", true);\n` +
+          `if (!COMPILED) { };\n`
         );
         expect(tree.errors).to.empty;
         expect(module).to.exist;
         const originalSource = new RawSource(module.source);
-        const def1 = module.defines.get('COMPILED');
-        expect(def1).to.exist;
-        const trans1 = new GoogDefineTrans(module, def1);
-        const def2 = module.defines.get('goog.DEBUG');
-        const trans2 = new GoogDefineTrans(module, def2);
-        const source = generate(originalSource, [trans1, trans2], generateContext);
+        const param = module.defineParams.get('goog.DEBUG')[0];
+        const trans = new GoogDefineTrans(module, param);
+        const source = generate(originalSource, [trans, ...module.trans], generateContext);
         expect(source.source()).to.equal(
-          `var COMPILED = true;\n` +
-          `goog.DEBUG = false;\n`
+          `goog.DEBUG = /* goog.define("goog.DEBUG", true) */false;\n` +
+          `if (!/* COMPILED */true) { };\n`
         );
       });
 
       it('missing left part of genenal variable', () => {
         tree.clear();
-        const module: any = tree.loadModule('path/to/a',
+        // Mock Closure library module.
+        const module: any = tree.loadModule(tree.basefile,
           // a is general variable, not any namespace.
           `goog.define("a", false);\n`
         );
         expect(tree.errors).to.empty;
         expect(module).to.exist;
         const originalSource = new RawSource(module.source);
-        const def = module.defines.get('a');
-        expect(def).to.exist;
-        expect(def.missingLeft).to.true;
-        const trans = new GoogDefineTrans(module, def);
+        const param = module.defineParams.get('a')[0];
+        expect(param).to.exist;
+        expect(param.missingLeft).to.true;
+        const trans = new GoogDefineTrans(module, param);
         const source = generate(originalSource, trans, generateContext);
         expect(source.source()).to.equal(
-          `a = false;\n`
-        );
-      });
-
-      it('missing left part of non Closure library namespace', () => {
-        tree.clear();
-        const module: any = tree.loadModule('path/to/a',
-          `goog.provide("a");\n` +
-          // a is not Clousre library namespace.
-          `goog.define("a.val", false);\n`
-        );
-        expect(tree.errors).to.empty;
-        expect(module).to.exist;
-        const originalSource = new RawSource(module.source);
-        const def = module.defines.get('a.val');
-        expect(def).to.exist;
-        expect(def.missingLeft).to.true;
-        const trans = new GoogDefineTrans(module, def);
-        const source = generate(originalSource, trans, generateContext);
-        expect(source.source()).to.equal(
-          `goog.provide("a");\n` +
-          // Should add goog.global prefix.
-          `goog.global.a.val = false;\n`
+          `a = /* goog.define("a", false) */false;\n`
         );
       });
 
@@ -638,15 +615,12 @@ describe('test transformation', () => {
         expect(tree.errors).to.empty;
         expect(module).to.exist;
         const originalSource = new RawSource(module.source);
-        const def = module.defines.get('goog.DEBUG');
-        expect(def).to.exist;
-        expect(def.missingLeft).to.true;
-        const trans = new GoogDefineTrans(module, def);
+        const param = module.defineParams.get('goog.DEBUG')[0];
+        expect(param).to.exist;
+        expect(param.missingLeft).to.true;
+        const trans = new GoogDefineTrans(module, param);
         const source = generate(originalSource, trans, generateContext);
-        expect(source.source()).to.equal(
-          // Should not add the goog.global prefix.
-          `goog.DEBUG = false;\n`
-        );
+        expect(/goog.DEBUG\s=\s\/\*\s+[^]+\*\/false;/.test(source.source())).to.true;
       });
     });
   });
