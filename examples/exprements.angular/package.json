@@ -22,7 +22,7 @@
     "core-js": "^3.22.7",
     "fs-extra": "^10.1.0",
     "google-closure-library": "^20210406.0.0",
-    "google-closure-library-webpack-plugin": "^2.1.2",
+    "google-closure-library-webpack-plugin": "^2.2.0",
     "html-loader": "^3.1.0",
     "html-webpack-plugin": "^5.5.0",
     "http-server": "^14.1.0",
