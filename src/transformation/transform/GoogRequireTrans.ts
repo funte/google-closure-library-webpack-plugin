@@ -25,7 +25,7 @@ export class GoogRequireTrans extends GoogTrans {
     const namespace = this.info.fullname;
     const moduleSource = this.module.source;
     if (!moduleSource) {
-      throw new PluginError(`Undefined Closure module source at file ${this.module.request}.`)
+      throw new PluginError(`Undefined Closure module source at file ${this.module.request}.`);
     }
 
     let requireVar: string | null;

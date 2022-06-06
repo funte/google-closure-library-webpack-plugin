@@ -579,7 +579,16 @@ describe('Test ClosureModuleParserPlugin', () => {
       (tree.env as any).defines = oldDefines;
     });
 
-    // TODO: different value should error.
+    it('goog.define has different defaultValue, should error', () => {
+      tree.clear();
+      // Mock Closure library module.
+      const module: any = tree.loadModule(tree.basefile,
+        `goog.define("name", true);\n` +
+        `goog.define("name", false);\n`
+      );
+      expect(tree.errors.length).to.equal(1);
+      expect(tree.errors[0]).to.instanceOf(InvalidParameterError);
+    });
   });
 
   describe('parse dependencies file', () => {
@@ -1068,20 +1077,7 @@ describe('Test ClosureModuleParserPlugin', () => {
         expect(tree.errors).to.empty;
         info = module.provides.get('a.b');
         expect(info).to.exist;
-        // "a" is required, implicities should be empty.
-        expect(info.implicities).to.empty;
-
-        tree.clear();
-        module = tree.loadModule('path/to/module',
-          `goog.provide("a");\n` +
-          `goog.provide("a.b");\n`
-        );
-        expect(module).to.exist;
-        expect(tree.errors).to.empty;
-        info = module.provides.get('a.b');
-        expect(info).to.exist;
-        // "a" has provided in this module, implicities should be empty.
-        expect(info.implicities).to.empty;
+        expect(info.implicities).to.deep.equal(['a']);
       });
 
       it('parse implicit namespaces of legacy GOOG module', () => {
@@ -1109,8 +1105,7 @@ describe('Test ClosureModuleParserPlugin', () => {
         expect(tree.errors).to.empty;
         info = module.provides.get('a.b');
         expect(info).to.exist;
-        // "a" is required, implicities should be empty.
-        expect(info.implicities).to.empty;
+        expect(info.implicities).to.deep.equal(['a']);
       });
 
       it('invalid namespace parameter, should error', () => {
@@ -1525,6 +1520,7 @@ describe('Test ClosureModuleParserPlugin', () => {
         module = tree.loadModule('path/to/module',
           `goog.module("a");\n` +
           `goog.module.declareLegacyNamespace();\n` +
+          // expression
           `something(a);\n`
         );
         expect(module).to.exist;
@@ -1535,6 +1531,7 @@ describe('Test ClosureModuleParserPlugin', () => {
         module = tree.loadModule('path/to/module',
           `goog.module("a");\n` +
           `goog.module.declareLegacyNamespace();\n` +
+          // memberChain
           `something(a.val);\n`
         );
         expect(module).to.exist;
@@ -1545,11 +1542,25 @@ describe('Test ClosureModuleParserPlugin', () => {
         module = tree.loadModule('path/to/module',
           `goog.module("a");\n` +
           `goog.module.declareLegacyNamespace();\n` +
+          // callMemberChain
           `something(a.func());\n`
         );
         expect(module).to.exist;
         expect(tree.errors).to.empty;
         expect(module.namespaceUsages.has('a')).to.true;
+
+        tree.clear();
+        module = tree.loadModule('path/to/module',
+          `goog.module("a");\n` +
+          `goog.module.declareLegacyNamespace();\n` +
+          // callMemberChain and memberChain in arguments.
+          `a.func(a.val);\n`
+        );
+        expect(module).to.exist;
+        expect(tree.errors).to.empty;
+        const usages = module.namespaceUsages.get('a');
+        expect(usages).to.exist;
+        expect(usages.length).to.equal(2);
       });
 
       it('test record required namespaces usage in legacy GOOG module', () => {

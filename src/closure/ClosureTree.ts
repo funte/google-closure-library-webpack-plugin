@@ -227,7 +227,7 @@ export class ClosureTree {
 
             // Set legacy flag and fix it by reprasing implicit namespaces.
             module.legacy = true;
-            module.parserImplicities();
+            module.parseImplicities();
           } else {
             const requireStack = Array.from(moduleStack).map(module => module.request);
             if (requiredModule) {

@@ -955,7 +955,7 @@ export class ClosureModuleParserPlugin {
       const module = parser.state.closure.module as ClosureModule;
       if (module.isbase) { return; }
 
-      module.parserImplicities();
+      module.parseImplicities();
     });
   }
 
@@ -1120,11 +1120,11 @@ export class ClosureModuleParserPlugin {
       }
     });
 
-    // Record namespace usages in PROVIDE and legacy GOOG module, something like
-    // a, a.b and a.b().
-    tapMulti(PLUGIN_NAME, [
-      hooks.expression, hooks.expressionMemberChain, hooks.callMemberChain
-    ], namespaceTag, (expr, members) => {
+    // Record namespace usages in PROVIDE and legacy GOOG module.
+    // Simple parse the expression of provided and required namespaceroot, all
+    // memberChain, callMemberChain,  memberChainOfCallMemberChain and 
+    // callMemberChainOfCallMemberChain will trigger expression at last.
+    tap(PLUGIN_NAME, hooks.expression, namespaceTag, expr => {
       const module = parser.state.closure.module as ClosureModule;
 
       // Stop if Closure library module.
@@ -1132,29 +1132,19 @@ export class ClosureModuleParserPlugin {
       const namespaceRoot: string = parser.currentTagData;
       // Stop if namespace start with goog.
       if (namespaceRoot === 'goog') { return; }
-      const exprName = [namespaceRoot].concat(members || []).join('.');
-      // Get current used namespace.
-      const namespace: string | undefined = module.getNamespaceType(exprName).owner;
-      if (namespace === undefined) { return; }
       if (module.type === ModuleType.PROVIDE || module.legacy) {
         // Record this usage.
-        let usages = module.namespaceUsages.get(namespace);
+        let usages = module.namespaceUsages.get(namespaceRoot);
         if (usages === undefined) {
-          module.namespaceUsages.set(namespace, usages = []);
+          module.namespaceUsages.set(namespaceRoot, usages = []);
         }
         usages.push(expr);
       } else {
         // Error if using namespace outside PROVIDE and legacy GOOG module.
         throw new NamespaceOutModuleError({
           file: module.request, loc: expr.loc,
-          namespace
+          namespace: namespaceRoot
         });
-      }
-
-      if (members !== undefined) {
-        // Return true to stop expressionMemberChain and not trigger expression 
-        // for this namespace root anymore.
-        return true;
       }
     });
   }

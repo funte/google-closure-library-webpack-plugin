@@ -4,6 +4,7 @@ import path from 'path';
 import { asString } from "../utils/asString";
 import { transform } from '../transformation/ClosureModuleTransform';
 import { PluginError } from '../errors/PluginError';
+import { resolveRequest } from '../utils/resolveRequest';
 
 import type { LoaderClosureContext } from "../plugins/LoaderPlugin";
 import type { Source } from 'webpack-sources';
@@ -53,13 +54,12 @@ export = function (
     } else {
       // Ignore Closure library module.
       if (!closure.tree.isLibraryModule(resource)) {
-        if (!fs.existsSync(output)) {
-          fs.mkdirpSync(output);
+        let outputfile = path.relative(closure.env.context, resource);
+        outputfile = resolveRequest(outputfile, output + '/transformed');
+        if (!fs.existsSync(path.dirname(outputfile))) {
+          fs.mkdirpSync(path.dirname(outputfile));
         }
-        fs.writeFileSync(
-          path.resolve(output, `transformed_${path.basename(resource)}`),
-          asString(source.source().toString())
-        );
+        fs.writeFileSync(outputfile, asString(source.source().toString()));
       }
     }
   }

@@ -442,18 +442,11 @@ export class ClosureModule {
     }
   }
 
-  /** Parser and fill the implicit namespaces of all provide informations, its auto execute while parsing. */
-  parserImplicities(): void {
+  /** Parse and fill the implicit namespaces of all provide informations, its auto execute while parsing. */
+  parseImplicities(): void {
     if (this.type === ModuleType.PROVIDE || this.legacy) {
-      // Store all required and implicit namespaces.
-      const allrequired: Set<string> = new Set();
-      for (const namespace of this.requires.keys()) {
-        travelNamespaceToRoot(namespace, (name, fullname) => {
-          allrequired.add(fullname);
-        });
-      }
-      // Store all implicit namespaces.
-      const allImplicities: Set<string> = new Set();
+      // Store all implicit and provided namespaces.
+      const all: Set<string> = new Set();
 
       Array.from(this.provides.values())
         // Sort provided namespaces by end position.
@@ -488,14 +481,12 @@ export class ClosureModule {
             info.implicities = [];
           }
           travelNamespaceToRoot(info.fullname, (name, fullname) => {
-            // If current namespace has required, stop it.
-            if (allrequired.has(fullname)) { return false; }
-            // If current namespace not contruct and not provided.
-            if (!allImplicities.has(fullname) && !this.provides.has(fullname)) {
+            // If current implicit namespace not contruct.
+            if (!all.has(fullname) && fullname !== info.fullname) {
               // @ts-ignore
               info.implicities.push(fullname);
-              allImplicities.add(fullname);
             }
+            all.add(fullname);
           });
           info.implicities = info.implicities.reverse();
         });
