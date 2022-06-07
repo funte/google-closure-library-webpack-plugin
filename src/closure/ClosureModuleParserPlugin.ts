@@ -167,6 +167,10 @@ export class ClosureModuleParserPlugin {
       const module = parser.state.closure.module as ClosureModule;
       if (!module.isbase) { return; }
 
+      if (!module.source) {
+        throw new PluginError(`Undefined Closure module source at file ${module.request}.`);
+      }
+
       if (declarator.id.name === 'COMPILED') {
         // Error if current statement node range property undefined.
         const currentStatement = parser.statementPath[parser.statementPath.length - 1];
@@ -176,8 +180,13 @@ export class ClosureModuleParserPlugin {
         ) {
           throw new PluginError(`Undefined statement range property at file ${module.request}.`);
         }
+        const range: any = [...currentStatement.range];
+        // Back the end position until semicolon or LF character.
+        while (![';', '\r', '\n'].includes(module.source.charAt(range[1]))) {
+          range[1]--;
+        }
         // Add a GoogConstTrans to remove the declaration.
-        module.trans.push(new GoogConstTrans(module, currentStatement.range));
+        module.trans.push(new GoogConstTrans(module, range));
       }
     });
 
@@ -186,9 +195,18 @@ export class ClosureModuleParserPlugin {
       const module = parser.state.closure.module as ClosureModule;
       if (!module.isbase) { return; }
 
+      if (!module.source) {
+        throw new PluginError(`Undefined Closure module source at file ${module.request}.`);
+      }
+
       const exprName = ['goog'].concat(members).join('.');
       if (exprName === 'goog.global' && typeof this.env.globalObject === 'string') {
-        const trans = new GoogConstTrans(module, expr.right.range, this.env.globalObject);
+        const range: any = [...expr.right.range];
+        // Back the end position until not include semicolon and LF character.
+        while ([';', '\r', '\n'].includes(module.source.charAt(range[1]))) {
+          range[1]--;
+        }
+        const trans = new GoogConstTrans(module, range, this.env.globalObject);
         module.trans.push(trans);
       }
     });

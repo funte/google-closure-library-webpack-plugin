@@ -232,6 +232,7 @@ describe('test transformation', () => {
 
   const env = new Environment({
     context: resolveRequest('fixtures', __dirname),
+    globalObject: 'window || this || self',
     warningLevel: 'show'
   });
   const tree = new ClosureTree({
@@ -626,6 +627,31 @@ describe('test transformation', () => {
   });
 
   describe('test ClosureModuleTransform', () => {
+    it('transform base.js file with default target', () => {
+      tree.clear();
+      // Mock the base.js file.
+      const module: any = tree.loadModule(tree.basefile,
+        `var COMPILED = true;\n` +
+        `goog.global = this || self;\n` +
+        // Missing left part.
+        `goog.define("name", true);\n`
+      );
+      expect(tree.errors).to.empty;
+      expect(module).to.exist;
+      const source = transform({
+        content: module.source,
+        module,
+        tree,
+        env
+      });
+      expect(tree.errors).to.empty;
+      expect(source.source().toString()).to.equal(
+        `goog.global = window || this || self;\n` +
+        `name = /* goog.define("name", true) */true;\n` +
+        `export default goog;\n`
+      );
+    });
+
     it('transform GOOG module with default target', () => {
       tree.clear();
       tree.scan();
