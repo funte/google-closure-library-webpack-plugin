@@ -213,9 +213,9 @@ export class ClosureModuleParserPlugin {
 
       setModuleType(module, ModuleType.COMMONJS);
     });
-    // Detect expression of require.main, require.cache, module.loaded and module.id.
+    // Detect expression of require.main, require.cache, module.loaded, module.id and module.exports.
     tap(PLUGIN_NAME, hooks.expression, [
-      'require.main', 'require.cache', 'module.loaded', 'module.id'
+      'require.main', 'require.cache', 'module.loaded', 'module.id', 'module.exports'
     ], () => {
       const module = parser.state.closure.module as ClosureModule;
       if (module.type === ModuleType.COMMONJS) { return; }

@@ -147,6 +147,22 @@ describe('Test ClosureModuleParserPlugin', () => {
       expect(tree.errors).to.empty;
       expect(module).to.exist;
       expect(module.type).to.equal(ModuleType.COMMONJS);
+
+      tree.clear();
+      module = tree.loadModule('path/to/module',
+        `module.exports = something;\n`
+      );
+      expect(tree.errors).to.empty;
+      expect(module).to.exist;
+      expect(module.type).to.equal(ModuleType.COMMONJS);
+
+      tree.clear();
+      module = tree.loadModule('path/to/module',
+        `module.exports.something = something;\n`
+      );
+      expect(tree.errors).to.empty;
+      expect(module).to.exist;
+      expect(module.type).to.equal(ModuleType.COMMONJS);
     });
 
     it('detect calling of require', () => {
