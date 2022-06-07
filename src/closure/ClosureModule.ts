@@ -481,6 +481,7 @@ export class ClosureModule {
             info.implicities = [];
           }
           travelNamespaceToRoot(info.fullname, (name, fullname) => {
+            if (fullname === 'goog') { return; }
             // If current implicit namespace not contruct.
             if (!all.has(fullname) && fullname !== info.fullname) {
               // @ts-ignore

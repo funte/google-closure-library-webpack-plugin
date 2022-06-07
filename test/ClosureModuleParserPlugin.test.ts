@@ -1070,6 +1070,36 @@ describe('Test ClosureModuleParserPlugin', () => {
         expect(info.id).to.undefined;
       });
 
+      it('parse implicit namespaces in Closure library module', () => {
+        let module: any = undefined;
+        let info: any = undefined;
+
+        tree.clear();
+        // Mock Closure library module.
+        module = tree.loadModule(
+          resolveRequest('a.js', tree.googpath),
+          `goog.provide("a.b.c");\n`
+        );
+        expect(tree.errors).to.empty;
+        expect(module).to.exist;
+        info = module.provides.get('a.b.c');
+        expect(info).to.exist;
+        expect(info.implicities).to.deep.equal(['a', 'a.b']);
+
+        tree.clear();
+        // Mock Closure library module.
+        module = tree.loadModule(
+          resolveRequest('a.js', tree.googpath),
+          `goog.provide("goog.a.b.c");\n`
+        );
+        expect(tree.errors).to.empty;
+        expect(module).to.exist;
+        info = module.provides.get('goog.a.b.c');
+        expect(info).to.exist;
+        // Should not has goog.
+        expect(info.implicities).to.deep.equal(['goog.a', 'goog.a.b']);
+      });
+
       it('parse implicit namespaces of PROVIDE module', () => {
         let module: any = undefined;
         let info: any = undefined;
