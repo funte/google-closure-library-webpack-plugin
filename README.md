@@ -55,7 +55,7 @@ No, but you can still use it with `goog.addDependency` load and execute JsUnit t
 ### 💊Influenced symbols in compiled base.js file
 + `COMPILED` will be stripped and replaced with constant `true`, e.g. this code `if(!COMPILED) { }` will be converted to `if(!true) { }`;  
 + `goog.DEBUG` defaults to `false`;  
-+ Replace `goog.global` with [options.output.globalObject](https://webpack.js.org/configuration/output/#outputglobalobject);  
++ Replace `goog.global` with Webpack [options.output.globalObject](https://webpack.js.org/configuration/output/#outputglobalobject);  
 
 ## Error case
 TODO: add error case.
@@ -63,7 +63,7 @@ TODO: add error case.
 ## TODOS
 These features will add to next version.  
 * ✔ ClosureTree.check;  
-* More test, test whole Closure library;  
+* More test, test more Closure library modules;  
 * Check whether unexposed namespace(except Closure library modules) outside PROVIDE and legacy GOOG module has dot serparator, like this:  
   ```
   // X: in this GOOG module, namespace "a.b.c" not exposed but has dot separator, should error.
@@ -79,9 +79,10 @@ These features will add to next version.
   // X: in this PROVIDE module, namespace "a.b" exposed and will construct a duplicated implicit namespace "a", should error.
   goog.provide("a.b");
   ```
-* `ClosureModuleParserPlugin` support JS/TS/TSX, add more `target` option;  
+* `ClosureModuleParserPlugin` support JS/TS/JSX;
+* Export `ClosureModuleLoader`, remove the injection from `LoaderPlugin`;    
 * Support soy template?  
-* Parser annotations?  
+* Parse annotations?  
 
 ## News
 * [VSCode extension Closure-Namespace-View](https://github.com/funte/VSCODE-Closure-Namspace-View) has released, use it quickly browse your Closure namespace  
