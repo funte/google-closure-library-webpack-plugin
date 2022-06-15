@@ -171,37 +171,41 @@ export class ClosureTree {
       moduleStack.add(module);
 
       let requiredModule: any = undefined;
-      for (const namespace of module.requires.keys()) {
-        requiredModule = this.getModule(namespace);
-        // Error if the required namespace missing or load failed.
-        if (!requiredModule) {
-          throw new PluginError(`Unknow namespace ${namespace} or the module load failed.`);
-        }
+      let parentModule: any = Array.from(moduleStack).pop();
+      // Stop check required if the parent is Closure library module.
+      if (parentModule && !this.isLibraryModule(parentModule.request)) {
+        for (const namespace of module.requires.keys()) {
+          requiredModule = this.getModule(namespace);
+          // Error if the required namespace missing or load failed.
+          if (!requiredModule) {
+            throw new PluginError(`Unknow namespace ${namespace} or the module load failed.`);
+          }
 
-        // Error if require self provided namespace.
-        if (module.provides.has(namespace)) {
-          const loc: any = module.requires.get(namespace)?.expr?.loc;
-          throw new BadRequire({
-            file: module.request, loc,
-            desc: `cannot require self provided namespace.`
-          });
-        }
+          // Error if require self provided namespace.
+          if (module.provides.has(namespace)) {
+            const loc: any = module.requires.get(namespace)?.expr?.loc;
+            throw new BadRequire({
+              file: module.request, loc,
+              desc: `cannot require self provided namespace.`
+            });
+          }
 
-        // First occurs a PROVIDE moudle, flag all connected modules in stack.
-        const requirePROVIDE = requiredModule.type === ModuleType.PROVIDE;
-        if (!anyPROVIDE && requirePROVIDE) {
-          // @ts-ignore
-          moduleStack.forEach(module => { indexMap.get(module).anyPROVIDE = true; });
-        }
+          // First occurs a PROVIDE moudle, flag all connected modules in stack.
+          const requirePROVIDE = requiredModule.type === ModuleType.PROVIDE;
+          if (!anyPROVIDE && requirePROVIDE) {
+            // @ts-ignore
+            moduleStack.forEach(module => { indexMap.get(module).anyPROVIDE = true; });
+          }
 
-        const requiredModuleIndex = indexMap.get(requiredModule)?.index;
-        if (typeof requiredModuleIndex !== 'number') {
-          lowIndex = Math.min(
-            lowIndex,
-            innerCheck(requiredModule, anyPROVIDE || requirePROVIDE)
-          );
-        } else if (moduleStack.has(requiredModule)) {
-          lowIndex = Math.min(lowIndex, requiredModuleIndex);
+          const requiredModuleIndex = indexMap.get(requiredModule)?.index;
+          if (typeof requiredModuleIndex !== 'number') {
+            lowIndex = Math.min(
+              lowIndex,
+              innerCheck(requiredModule, anyPROVIDE || requirePROVIDE)
+            );
+          } else if (moduleStack.has(requiredModule)) {
+            lowIndex = Math.min(lowIndex, requiredModuleIndex);
+          }
         }
       }
 
