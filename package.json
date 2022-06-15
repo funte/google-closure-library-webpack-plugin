@@ -14,6 +14,7 @@
   "bugs": "https://github.com/funte/google-closure-library-webpack-plugin/issues",
   "license": "MIT",
   "scripts": {
+    "prepublish": "yarn compile",
     "compile": "rm -rf ./dist && tsc",
     "watch": "rm -rf ./dist && tsc -watch",
     "test": "yarn run test:lint && yarn run test:all",
